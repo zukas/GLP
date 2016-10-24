@@ -7,6 +7,16 @@
 #include <cstdint>
 #include <cstdio>
 
+#ifdef NDEBUG
+#define DEBUG_MEMBER_EXPR(expr)
+#define DEBUG_CTOR_EXPR(expr)
+#define DEBUG_USE(var)
+#else
+#define DEBUG_MEMBER_EXPR(expr) expr;
+#define DEBUG_CTOR_EXPR(expr) expr,
+#define DEBUG_USE(var) var
+#endif
+
 namespace glp {
 
 struct memblk {
@@ -43,12 +53,12 @@ void __glp_mem_sys_free(byte *p);
 class mem_buffer_manager {
 private:
   byte *_buffer;
-  long _total;
+  DEBUG_MEMBER_EXPR(long _total)
   long _fetched;
 
 public:
-  mem_buffer_manager(byte *buffer, long size)
-      : _buffer(buffer), _total(size), _fetched(0) {}
+  mem_buffer_manager(byte *buffer, long DEBUG_USE(size))
+      : _buffer(buffer), DEBUG_CTOR_EXPR(_total(size)) _fetched(0) {}
   ~mem_buffer_manager() { assert(_fetched == _total); }
 
   template <class mem_alloc> byte *fetch(const mem_alloc *alloc) {
@@ -301,17 +311,14 @@ public:
     }
     return blk;
   }
-
   void free(memblk blk) {
     if (&_buffer[_idx - blk.size] == blk.ptr) {
       _idx -= blk.size;
     }
   }
-
   bool owns(memblk blk) const {
     return blk.ptr >= _buffer && blk.ptr < _buffer + blk_size;
   }
-
   bool can_alloc(long size) const { return size + _idx <= blk_size; }
   long heap_size() const { return 0; }
   long stack_size() const { return blk_size; }
@@ -342,17 +349,14 @@ public:
     }
     return blk;
   }
-
   void free(memblk blk) {
     if (&_buffer[_idx - blk.size] == blk.ptr) {
       _idx -= blk.size;
     }
   }
-
   bool owns(memblk blk) const {
     return blk.ptr >= _buffer && blk.ptr < _buffer + blk_size;
   }
-
   bool can_alloc(long size) const { return size + _idx <= blk_size; }
   long heap_size() const { return blk_size; }
   long stack_size() const { return 0; }
@@ -361,11 +365,11 @@ public:
 template <> class mem_allock_stack_h<0l> {
 public:
   mem_allock_stack_h(mem_buffer_manager &) {}
-  memblk alloc(long size) {
+  memblk alloc(long DEBUG_USE(size)) {
     assert(size == 0);
     return memblk{nullptr, 0};
   }
-  void free(memblk blk) { assert(blk.size == 0); }
+  void free(memblk DEBUG_USE(blk)) { assert(blk.size == 0); }
   bool owns(memblk) const { return false; }
   bool can_alloc(long) const { return false; }
   long heap_size() const { return 0; }
@@ -402,18 +406,16 @@ class mem_alloc_pool
 
 public:
   mem_alloc_pool(mem_buffer_manager &buffer) : mem_alloc_pool_base_t(buffer) {}
-  memblk alloc(long size) {
+  memblk alloc(long DEBUG_USE(size)) {
     assert(size >= min_blk_size && size <= max_blk_size);
     return mem_alloc_pool_base_t::alloc(max_blk_size);
   }
-
   void free(memblk blk) {
     assert(blk.size <= max_blk_size);
     if (mem_alloc_pool_base_t::owns(blk)) {
       mem_alloc_pool_base_t::free(blk);
     }
   }
-
   bool owns(memblk blk) const { return mem_alloc_pool_base_t::owns(blk); }
   bool can_alloc(long size) const {
     return size >= min_blk_size && size <= max_blk_size &&
@@ -425,13 +427,59 @@ public:
 
 /** END **/
 
+/** Waste calculator **/
+
+template <class mem_alloc> class mem_alloc_waste : private mem_alloc {
+private:
+  long long int _waste{0};
+
+public:
+  mem_alloc_waste(mem_buffer_manager &buffer) : mem_alloc(buffer) {}
+  ~mem_alloc_waste() { printf("Wasted memory: %lld (b)\n", _waste); }
+  memblk alloc(long size) {
+    memblk blk = mem_alloc::alloc(size);
+    _waste += (blk.size - size);
+    return blk;
+  }
+  void free(memblk blk) { mem_alloc::free(blk); }
+  bool owns(memblk blk) const { return mem_alloc::owns(blk); }
+  bool can_alloc(long size) const { return mem_alloc::can_alloc(size); }
+  long heap_size() const { return mem_alloc::heap_size(); }
+  long stack_size() const { return mem_alloc::stack_size(); }
+};
+
+/** END **/
+
+/** Total calculator **/
+
+template <class mem_alloc> class mem_alloc_total : private mem_alloc {
+private:
+  long long int _total{0};
+
+public:
+  mem_alloc_total(mem_buffer_manager &buffer) : mem_alloc(buffer) {}
+  ~mem_alloc_total() { printf("Total allocated memory: %lld (b)\n", _total); }
+  memblk alloc(long size) {
+    memblk blk = mem_alloc::alloc(size);
+    _total += blk.size;
+    return blk;
+  }
+  void free(memblk blk) { mem_alloc::free(blk); }
+  bool owns(memblk blk) const { return mem_alloc::owns(blk); }
+  bool can_alloc(long size) const { return mem_alloc::can_alloc(size); }
+  long heap_size() const { return mem_alloc::heap_size(); }
+  long stack_size() const { return mem_alloc::stack_size(); }
+};
+
+/** END **/
+
 /** Composite Allocator **/
 
 using mem_alloc_composit_small = mem_alloc_partition<
-    mem_alloc_partition<mem_alloc_partition<mem_alloc_pool<4, 16, MB(10)>, 16,
-                                            mem_alloc_pool<17, 32, MB(5)>>,
-                        32, mem_alloc_pool<33, 64, MB(5)>>,
-    64, mem_alloc_pool<65, 256, MB(5)>>;
+    mem_alloc_partition<mem_alloc_partition<mem_alloc_pool<4, 16, MB(29)>, 16,
+                                            mem_alloc_pool<17, 32, MB(10)>>,
+                        32, mem_alloc_pool<33, 64, KB(1)>>,
+    64, mem_alloc_pool<65, 256, MB(10)>>;
 
 using mem_alloc_composit_large =
     mem_alloc_partition<mem_alloc_pool<257, KB(1), KB(2)>, KB(1),
@@ -441,9 +489,6 @@ using mem_alloc_composit = mem_alloc_partition<mem_alloc_composit_small, 256,
                                                mem_alloc_composit_large>;
 
 using mem_alloc_testing = mem_alloc_manager<mem_alloc_composit, mem_alloc_sys>;
-
-// using mem_alloc_testing =
-//    mem_alloc_manager<mem_alloc_free_list<4, 64, mem_alloc_sys>>;
 
 /** END **/
 
@@ -473,14 +518,14 @@ public:
 
 class object_counter_end {
 public:
-  void inc(long size) { assert(size == 0); }
-  void dec(long size) { assert(size == 0); }
+  void inc(long DEBUG_USE(size)) { assert(size == 0); }
+  void dec(long DEBUG_USE(size)) { assert(size == 0); }
 };
 
 class mem_alloc_null {
 public:
   memblk allocate(long) { return {nullptr, 0}; }
-  void deallocate(memblk blk) {
+  void deallocate(memblk DEBUG_USE(blk)) {
     assert(blk.ptr == nullptr);
     assert(blk.size == 0);
   }
@@ -507,14 +552,12 @@ public:
     }
     return blk;
   }
-
   void free(memblk blk) {
     if (mem_alloc::owns(blk)) {
       mem_alloc::free(blk);
       instance_counter::dec(blk.size);
     }
   }
-
   bool can_alloc(long size) const { return mem_alloc::can_alloc(size); }
   bool owns(memblk blk) const { return mem_alloc::owns(blk); }
   long heap_size() const { return mem_alloc::heap_size(); }
