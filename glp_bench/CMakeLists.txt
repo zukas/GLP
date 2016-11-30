@@ -1,4 +1,4 @@
-project(glp_tests)
+project(glp_bench)
 cmake_minimum_required(VERSION 2.8)
 
 include_directories(${CMAKE_SOURCE_DIR})
@@ -16,6 +16,6 @@ file(GLOB SOURCE_FILES
     )
 
 add_executable(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES})
-target_link_libraries(${PROJECT_NAME} benchmark memory)
+target_link_libraries(${PROJECT_NAME} benchmark memory engine)
 
 

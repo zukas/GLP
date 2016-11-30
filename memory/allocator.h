@@ -42,8 +42,8 @@ template <typename T> constexpr T max(T x, T y) {
   return x ^ ((x ^ y) & -(x < y));
 }
 
-#define KB(N) 1024 * N
-#define MB(N) KB(1024) * N
+#define KB(N) 1024u * N
+#define MB(N) KB(1024u) * N
 
 /** Allocator manager **/
 
@@ -478,7 +478,7 @@ public:
 using mem_alloc_composit_small = mem_alloc_partition<
     mem_alloc_partition<mem_alloc_partition<mem_alloc_pool<4, 16, MB(29)>, 16,
                                             mem_alloc_pool<17, 32, MB(10)>>,
-                        32, mem_alloc_pool<33, 64, KB(1)>>,
+                        32, mem_alloc_pool<33, 64, MB(32)>>,
     64, mem_alloc_pool<65, 256, MB(10)>>;
 
 using mem_alloc_composit_large =
