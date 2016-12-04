@@ -1,10 +1,9 @@
 #ifndef IO_H
 #define IO_H
 
-#include <atomic>
-#include <cstdio>
+#include "utils/sysdef.h"
 
-#include "memory/atomic_pool_allocator.h"
+#include <cstdio>
 
 class IO {
 public:
@@ -12,7 +11,7 @@ public:
   struct log_item {
     log_level level;
     char buffer[255];
-  } __attribute__((packed));
+  } PACKED;
 
 public:
   IO();
@@ -22,24 +21,19 @@ public:
   static IO &instance();
 
 public:
-  log_item *createEntry();
-  void consumeEntry(log_item *item);
+  void write(log_item item);
 
 private:
   static IO *g_self;
-  std::atomic_long m_reader;
-  std::atomic_long m_idx[2];
-  log_item *m_backlog[2][256];
-  atomic_pool_allocator<log_item, 8192> m_alloc;
 };
 
 template <typename... __Args>
 void write(IO::log_level level, const char *__restrict format, __Args... args) {
   auto &io = IO::instance();
-  auto entry = io.createEntry();
-  snprintf(entry->buffer, 255, format, args...);
-  entry->level = level;
-  io.consumeEntry(entry);
+  IO::log_item entry;
+  entry.level = level;
+  snprintf(entry.buffer, 255, format, args...);
+  io.write(entry);
 }
 
 template <typename... __Args>

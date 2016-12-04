@@ -5,10 +5,11 @@
 
 #include <atomic>
 
-template <typename _Tp, size_t _On> class atomic_pool_allocator {
+template <typename _Tp, size_t _On, typename __Ma = sys_allocator>
+class atomic_pool_allocator {
 
 public:
-  atomic_pool_allocator() : m_blk(::mem_alloc(sizeof(_Tp) * _On)) {
+  atomic_pool_allocator() : m_blk(__Ma::acquire(size())) {
     atomic_pool_node_t *node = static_cast<atomic_pool_node_t *>(m_blk.ptr);
     atomic_pool_node_t *root = node;
     for (size_t i = 1; i < _On - 1; i++) {
@@ -21,7 +22,7 @@ public:
     m_root = root;
   }
 
-  ~atomic_pool_allocator() { ::mem_free(m_blk); }
+  ~atomic_pool_allocator() { __Ma::release(m_blk); }
   atomic_pool_allocator(const atomic_pool_allocator &) = delete;
   atomic_pool_allocator(atomic_pool_allocator &&) = delete;
 
@@ -44,6 +45,8 @@ public:
       ptr->next.store(tmp, std::memory_order_release);
     }
   }
+
+  static size_t size() { return sizeof(_Tp) * _On; }
 
 private:
   struct atomic_pool_node_t {

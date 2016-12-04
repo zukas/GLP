@@ -2,6 +2,7 @@
 #define MEMORY_H
 
 #include "mutils.h"
+
 #include <cstddef>
 #include <mutex>
 
@@ -36,5 +37,10 @@ private:
 
 memblk mem_alloc(size_t size);
 void mem_free(memblk blk);
+
+struct sys_allocator {
+  static memblk acquire(size_t size) { return mem_alloc(size); }
+  static void release(memblk blk) { mem_free(blk); }
+};
 
 #endif // MEMORY_H
