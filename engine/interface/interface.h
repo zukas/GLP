@@ -4,7 +4,7 @@
 class Interface {
 public:
   Interface();
-  void init();
+  bool init();
   void deinit();
 };
 

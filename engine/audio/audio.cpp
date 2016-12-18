@@ -2,6 +2,6 @@
 
 Audio::Audio() {}
 
-void Audio::init() {}
+bool Audio::init() { return true; }
 
 void Audio::deinit() {}

@@ -2,6 +2,6 @@
 
 Interface::Interface() {}
 
-void Interface::init() {}
+bool Interface::init() { return true; }
 
 void Interface::deinit() {}

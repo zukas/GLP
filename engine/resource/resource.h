@@ -4,7 +4,7 @@
 class Resource {
 public:
   Resource();
-  void init();
+  bool init();
   void deinit();
 };
 

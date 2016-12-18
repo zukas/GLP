@@ -7,3 +7,6 @@
 [submodule "bench/benchmark"]
 	path = bench/benchmark
 	url = https://github.com/google/benchmark.git
+[submodule "engine/renderer/opengl/gli"]
+	path = engine/renderer/opengl/gli
+	url = https://github.com/g-truc/gli.git

@@ -2,6 +2,6 @@
 
 Resource::Resource() {}
 
-void Resource::init() {}
+bool Resource::init() { return true; }
 
 void Resource::deinit() {}

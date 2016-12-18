@@ -4,7 +4,7 @@
 class Phisics {
 public:
   Phisics();
-  void init();
+  bool init();
   void deinit();
 };
 

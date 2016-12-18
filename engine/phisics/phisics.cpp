@@ -2,6 +2,6 @@
 
 Phisics::Phisics() {}
 
-void Phisics::init() {}
+bool Phisics::init() { return true; }
 
 void Phisics::deinit() {}

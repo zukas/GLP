@@ -1,11 +1,8 @@
-#include "engine/memory/memory.h"
+#include "glm/glm.hpp"
+#include "memory/memory.h"
 #include "memory_helper.h"
 #include <benchmark/benchmark.h>
 #include <cstdlib>
-#include <glm/glm.hpp>
-#include <memory/allocator.h>
-#include <memory/pool_allocator.h>
-#include <memory>
 
 // static void GLM_dot(benchmark::State &state) {
 //  glm::vec3 v1{0.5f, 0.3f, 0.2f};
@@ -316,6 +313,7 @@ BENCHMARK(memory_control_malloc);
 BENCHMARK(memory_control_malloc)->Threads(2);
 BENCHMARK(memory_control_malloc)->Threads(4);
 BENCHMARK(memory_control_malloc)->Threads(8);
+BENCHMARK(memory_control_malloc)->Threads(12);
 
 static Memory &init_allocator() {
   static Memory m{MB(800u)};
@@ -362,5 +360,5 @@ BENCHMARK(memory_control_custom);
 BENCHMARK(memory_control_custom)->Threads(2);
 BENCHMARK(memory_control_custom)->Threads(4);
 BENCHMARK(memory_control_custom)->Threads(8);
-
+BENCHMARK(memory_control_custom)->Threads(12);
 BENCHMARK_MAIN();

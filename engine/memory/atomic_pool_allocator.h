@@ -5,8 +5,10 @@
 
 #include <atomic>
 
-template <typename _Tp, size_t _On, typename __Ma = sys_allocator>
+template <size_t _S, size_t _On, typename __Ma = sys_allocator>
 class atomic_pool_allocator {
+protected:
+  using t_type = raw *;
 
 public:
   atomic_pool_allocator() : m_blk(__Ma::acquire(size())) {
@@ -26,18 +28,17 @@ public:
   atomic_pool_allocator(const atomic_pool_allocator &) = delete;
   atomic_pool_allocator(atomic_pool_allocator &&) = delete;
 
-  _Tp *alloc() {
+  raw *alloc() {
     atomic_pool_node_t *tmp = m_root.load(std::memory_order_acquire);
     while (!m_root.compare_exchange_strong(tmp, tmp->next,
                                            std::memory_order_acq_rel)) {
     }
 
-    return static_cast<_Tp *>(static_cast<raw *>(tmp));
+    return tmp;
   }
 
-  void free(_Tp *p) {
-    atomic_pool_node_t *ptr =
-        static_cast<atomic_pool_node_t *>(static_cast<raw *>(p));
+  void free(raw *p) {
+    atomic_pool_node_t *ptr = static_cast<atomic_pool_node_t *>(p);
     atomic_pool_node_t *tmp = m_root.load(std::memory_order_acquire);
     ptr->next.store(tmp, std::memory_order_release);
     while (
@@ -46,7 +47,8 @@ public:
     }
   }
 
-  static size_t size() { return sizeof(_Tp) * _On; }
+  constexpr static size_t size() { return _S * _On; }
+  constexpr static size_t opt_size(size_t) { return _S; }
 
 private:
   struct atomic_pool_node_t {

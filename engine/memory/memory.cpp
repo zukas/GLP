@@ -3,21 +3,11 @@
 #include <cassert>
 #include <cstdlib>
 
-Memory *Memory::g_self{nullptr};
+Memory::Memory() : m_buffer(nullptr), m_size(0), m_root(nullptr) {}
 
-Memory::Memory() : m_buffer(nullptr), m_size(0), m_root(nullptr) {
-  g_self = this;
-}
+Memory::Memory(size_t size) : m_buffer(nullptr) { init(size); }
 
-Memory::Memory(size_t size) : m_buffer(nullptr) {
-  init(size);
-  g_self = this;
-}
-
-Memory::~Memory() {
-  g_self = nullptr;
-  deinit();
-}
+Memory::~Memory() {}
 
 void Memory::init(size_t size) {
 
@@ -39,11 +29,6 @@ void Memory::deinit() {
   m_buffer = nullptr;
   m_size = 0;
   m_root = nullptr;
-}
-
-Memory &Memory::instance() {
-  assert(g_self != nullptr);
-  return *g_self;
 }
 
 memblk Memory::alloc(size_t size) {
@@ -83,23 +68,6 @@ memblk Memory::alloc(size_t size) {
     assert(m_root != nullptr);
     res = static_cast<raw *>(node);
   }
-  //  {
-  //    printf("alloc %lu | %lu\n", (reinterpret_cast<uintptr_t>(res) -
-  //                                 reinterpret_cast<uintptr_t>(m_buffer)) /
-  //                                    8388608,
-  //           size / 8388608);
-  //    int a = 4;
-  //    auto it = m_root;
-  //    while (it != nullptr) {
-  //      printf("%*lu | %lu\n", a, (reinterpret_cast<uintptr_t>(it) -
-  //                                 reinterpret_cast<uintptr_t>(m_buffer)) /
-  //                                    8388608,
-  //             it->size / 8388608);
-  //      it = it->next;
-  //      a += 4;
-  //    }
-  //    printf("\n");
-  //  }
   return {res, size};
 }
 
@@ -156,24 +124,6 @@ void Memory::free(memblk blk) {
     node->next = next;
     node->size = block_size;
   }
-
-  //  {
-  //    printf("free %lu | %lu\n", (reinterpret_cast<uintptr_t>(blk.ptr) -
-  //                                reinterpret_cast<uintptr_t>(m_buffer)) /
-  //                                   8388608,
-  //           blk.size / 8388608);
-  //    int a = 4;
-  //    auto it = m_root;
-  //    while (it != nullptr) {
-  //      printf("%*lu | %lu\n", a, (reinterpret_cast<uintptr_t>(it) -
-  //                                 reinterpret_cast<uintptr_t>(m_buffer)) /
-  //                                    8388608,
-  //             it->size / 8388608);
-  //      it = it->next;
-  //      a += 4;
-  //    }
-  //    printf("\n");
-  //  }
 }
 
 bool Memory::owns(memblk blk) {
@@ -181,6 +131,6 @@ bool Memory::owns(memblk blk) {
          blk.ptr <= address_add(m_buffer, m_size - blk.size - 1);
 }
 
-memblk mem_alloc(size_t size) { return Memory::instance().alloc(size); }
+memblk mem_alloc(size_t size) { return G_Memory::get()->alloc(size); }
 
-void mem_free(memblk blk) { Memory::instance().free(blk); }
+void mem_free(memblk blk) { G_Memory::get()->free(blk); }

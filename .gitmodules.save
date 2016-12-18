@@ -1,0 +1,8 @@
+
+git
+[submodule "engine/glm"]
+	path = engine/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "engine/glfw"]
+	path = engine/glfw
+	url = https://github.com/glfw/glfw.git

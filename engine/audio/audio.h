@@ -4,7 +4,7 @@
 class Audio {
 public:
   Audio();
-  void init();
+  bool init();
   void deinit();
 };
 

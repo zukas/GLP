@@ -13,6 +13,11 @@ struct memblk {
   size_t size;
 };
 
+struct block_node_t {
+  block_node_t *next;
+  size_t size;
+};
+
 template <size_t blk_size> constexpr size_t align_block(size_t size) {
   return (size + (blk_size - 1)) & ~(blk_size - 1);
 }

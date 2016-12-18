@@ -1,6 +1,6 @@
-#include "engine/engine.h"
+#include "runtime/runtime.h"
 
 int main() {
-  Engine e;
+  Runtime e;
   e.run();
 }
