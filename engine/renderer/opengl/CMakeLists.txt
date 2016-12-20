@@ -1,8 +1,6 @@
 project(backend-gl)
 cmake_minimum_required(VERSION 2.8)
 
-add_subdirectory(gli)
-
 file(GLOB HEADER_FILES
     "*.h"
     )
