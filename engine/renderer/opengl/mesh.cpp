@@ -57,18 +57,19 @@ uint32_t create_mesh_gl(const vertex *__restrict vertexes, long v_size,
                i_size * static_cast<long>(sizeof(uint32_t)), indexes,
                GL_STATIC_DRAW);
   glBindVertexArray(0);
-  G_MS::get().store(mesh_id, buffer);
+  G_MS::get().store(mesh_id, i_size, buffer);
   return mesh_id;
 }
 
 void destroy_mesh_gl(uint32_t mesh_id) {
-  mesh_buffer_gl buffer = G_MS::get().get(mesh_id);
+  mesh_buffer_gl buffer = G_MS::get().get_buffers(mesh_id);
   glDeleteBuffers(2, buffer.data);
   glDeleteVertexArrays(1, &mesh_id);
 }
 
-void render_mesh_gl(uint32_t mesh_id, int32_t e_size) {
+void render_mesh_gl(uint32_t mesh_id) {
+  long elems = G_MS::get().get_elem_count(mesh_id);
   glBindVertexArray(mesh_id);
-  glDrawElements(GL_TRIANGLES, e_size, GL_UNSIGNED_INT, nullptr);
+  glDrawElements(GL_TRIANGLES, elems, GL_UNSIGNED_INT, nullptr);
   glBindVertexArray(0);
 }

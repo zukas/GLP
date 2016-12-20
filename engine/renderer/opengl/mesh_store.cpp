@@ -8,25 +8,42 @@
 mesh_store::mesh_store() : m_buffers(nullptr), m_count(0) {}
 
 mesh_store::mesh_store(size_t count)
-    : m_buffers(static_cast<mesh_buffer_gl *>(
+    : m_elems(static_cast<long *>(renderer_mem_alloc(sizeof(long) * count))),
+      m_buffers(static_cast<mesh_buffer_gl *>(
           renderer_mem_alloc(sizeof(mesh_buffer_gl) * count))),
       m_count(count) {
+  memset(m_elems, 0, sizeof(long) * count);
   memset(m_buffers, 0, sizeof(mesh_buffer_gl) * count);
 }
 
 mesh_store::~mesh_store() {
+
+  if (m_elems) {
+    renderer_mem_free(m_elems, sizeof(long) * m_count);
+    m_elems = nullptr;
+  }
+
   if (m_buffers) {
     renderer_mem_free(m_buffers, sizeof(mesh_buffer_gl) * m_count);
     m_buffers = nullptr;
   }
 }
 
-void mesh_store::store(uint32_t mesh_id, mesh_buffer_gl buffer) {
+void mesh_store::store(uint32_t mesh_id, long elems, mesh_buffer_gl buffer) {
+  mesh_id--;
   assert(mesh_id < m_count);
+  m_elems[mesh_id] = elems;
   m_buffers[mesh_id] = buffer;
 }
 
-mesh_buffer_gl mesh_store::get(uint32_t mesh_id) {
+long mesh_store::get_elem_count(uint32_t mesh_id) const {
+  mesh_id--;
+  assert(mesh_id < m_count);
+  return m_elems[mesh_id];
+}
+
+mesh_buffer_gl mesh_store::get_buffers(uint32_t mesh_id) const {
+  mesh_id--;
   assert(mesh_id < m_count);
   return m_buffers[mesh_id];
 }

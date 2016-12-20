@@ -1,5 +1,5 @@
 #include "glm/glm.hpp"
-#include "memory/memory.h"
+#include "memory/global_heap_memory.h"
 #include "memory_helper.h"
 #include <benchmark/benchmark.h>
 #include <cstdlib>
@@ -315,43 +315,49 @@ BENCHMARK(memory_control_malloc)->Threads(4);
 BENCHMARK(memory_control_malloc)->Threads(8);
 BENCHMARK(memory_control_malloc)->Threads(12);
 
-static Memory &init_allocator() {
-  static Memory m{MB(800u)};
+class mem {
+public:
+  mem() { global_heap_init(MB(800)); }
+  ~mem() { global_heap_deinit(); }
+};
+
+static mem &init_allocator() {
+  static mem m;
   return m;
 }
 
 static void memory_control_custom(benchmark::State &state) {
   size_t size = 1;
-  Memory &m = init_allocator();
+  mem &m = init_allocator();
   while (state.KeepRunning()) {
-    auto b1 = mem_alloc(MB(size * 8));
-    *static_cast<int *>(b1.ptr) = 10;
-    escape(b1.ptr);
-    auto b2 = mem_alloc(MB(size * 4));
-    *static_cast<int *>(b2.ptr) = 20;
-    escape(b2.ptr);
-    auto b3 = mem_alloc(MB(size * 16));
-    *static_cast<int *>(b1.ptr) = 30;
-    escape(b3.ptr);
-    mem_free(b1);
-    auto b4 = mem_alloc(MB(size * 4));
-    *static_cast<int *>(b4.ptr) = 40;
-    escape(b4.ptr);
-    auto b5 = mem_alloc(MB(size * 4));
-    *static_cast<int *>(b5.ptr) = 50;
-    escape(b5.ptr);
-    mem_free(b2);
-    auto b6 = mem_alloc(MB(size * 4));
-    *static_cast<int *>(b6.ptr) = 60;
-    escape(b6.ptr);
-    auto b7 = mem_alloc(MB(size * 16));
-    *static_cast<int *>(b7.ptr) = 70;
-    escape(b7.ptr);
-    mem_free(b3);
-    mem_free(b5);
-    mem_free(b4);
-    mem_free(b7);
-    mem_free(b6);
+    auto b1 = global_heap_alloc(MB(size * 8));
+    *static_cast<int *>(b1) = 10;
+    escape(b1);
+    auto b2 = global_heap_alloc(MB(size * 4));
+    *static_cast<int *>(b2) = 20;
+    escape(b2);
+    auto b3 = global_heap_alloc(MB(size * 16));
+    *static_cast<int *>(b1) = 30;
+    escape(b3);
+    global_heap_free(b1, MB(size * 8));
+    auto b4 = global_heap_alloc(MB(size * 4));
+    *static_cast<int *>(b4) = 40;
+    escape(b4);
+    auto b5 = global_heap_alloc(MB(size * 4));
+    *static_cast<int *>(b5) = 50;
+    escape(b5);
+    global_heap_free(b2, MB(size * 4));
+    auto b6 = global_heap_alloc(MB(size * 4));
+    *static_cast<int *>(b6) = 60;
+    escape(b6);
+    auto b7 = global_heap_alloc(MB(size * 16));
+    *static_cast<int *>(b7) = 70;
+    escape(b7);
+    global_heap_free(b3, MB(size * 16));
+    global_heap_free(b5, MB(size * 4));
+    global_heap_free(b4, MB(size * 4));
+    global_heap_free(b7, MB(size * 16));
+    global_heap_free(b6, MB(size * 4));
   }
   clobber();
 }

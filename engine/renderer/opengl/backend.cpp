@@ -78,11 +78,12 @@ void deinit() {
   glfwTerminate();
 }
 
-void render() {
+void begin_frame() {
   log("Rendering");
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glfwSwapBuffers(context->window);
 }
+
+void end_frame() { glfwSwapBuffers(context->window); }
 
 void init_mesh_store(size_t count) { init_mesh_store_gl(count); }
 
@@ -92,3 +93,5 @@ uint32_t create_mesh(vertex *vertexes, long v_size, uint32_t *indexes,
 }
 
 void destroy_mesh(uint32_t mesh_id) { destroy_mesh_gl(mesh_id); }
+
+void render_mesh(uint32_t mesh_id) { render_mesh_gl(mesh_id); }

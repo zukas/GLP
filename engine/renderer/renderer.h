@@ -21,8 +21,12 @@ public:
                        long i_size);
   void destroy_mesh(uint32_t mesh_id);
 
+  void set_mesh_store(uint32_t *mesh_ids, size_t count);
+
 private:
   Backend m_backend;
+  uint32_t *m_mesh_store;
+  size_t m_mesh_store_size;
 };
 
 using G_Renderer = global_instance<Render>;

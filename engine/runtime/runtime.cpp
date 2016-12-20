@@ -3,29 +3,26 @@
 #include "audio/audio.h"
 #include "interface/interface.h"
 #include "io/io.h"
-#include "memory/memory.h"
+#include "memory/global_heap_memory.h"
+#include "memory/global_stack_memory.h"
 #include "memory/stack_allocator.h"
 #include "phisics/phisics.h"
 #include "renderer/renderer.h"
 #include "resource/resource.h"
-#include "runtime_memory.h"
 
 #include "utils/static_instance_factory.h"
 
-using G_HEAP = static_instance_factory<Memory>;
-
 Runtime::Runtime() {
 
-  G_HEAP::init().init(MB(800));
+  global_heap_init(MB(800));
+  global_stack_init(MB(1));
 
-  runtime_mem_init();
-
-  io = runtime_new<IO>();
-  resource = runtime_new<Resource>();
-  audio = runtime_new<Audio>();
-  render = runtime_new<Render>();
-  hud = runtime_new<Interface>();
-  phisics = runtime_new<Phisics>();
+  io = global_stack_make_new<IO>();
+  resource = global_stack_make_new<Resource>();
+  audio = global_stack_make_new<Audio>();
+  render = global_stack_make_new<Render>();
+  hud = global_stack_make_new<Interface>();
+  phisics = global_stack_make_new<Phisics>();
 
   bool status = true;
   status = status && io->init();
@@ -45,17 +42,15 @@ Runtime::~Runtime() {
   resource->deinit();
   io->deinit();
 
-  runtime_delete(phisics);
-  runtime_delete(hud);
-  runtime_delete(render);
-  runtime_delete(audio);
-  runtime_delete(resource);
-  runtime_delete(io);
+  global_stack_destroy(phisics);
+  global_stack_destroy(hud);
+  global_stack_destroy(render);
+  global_stack_destroy(audio);
+  global_stack_destroy(resource);
+  global_stack_destroy(io);
 
-  runtime_mem_deinit();
-
-  G_HEAP::get().deinit();
-  G_HEAP::deinit();
+  global_stack_deinit();
+  global_heap_deinit();
 }
 
 void Runtime::run() {

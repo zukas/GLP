@@ -12,6 +12,7 @@ void renderer_mem_deinit();
 
 void *renderer_mem_alloc(size_t size);
 void renderer_mem_free(void *ptr, size_t size);
+size_t renderer_mem_align_size(size_t size);
 
 template <typename _Tp> _Tp *renderer_new(size_t size = sizeof(_Tp)) {
   assert(size >= sizeof(_Tp));
@@ -33,8 +34,13 @@ void renderer_delete(_Tp *ptr, size_t size = sizeof(_Tp)) {
 }
 
 struct renderer_allocator {
-  static memblk acquire(size_t size);
-  static void release(memblk blk);
+  static inline raw *alloc(size_t size) { return renderer_mem_alloc(size); }
+  static inline void free(raw *ptr, size_t size) {
+    renderer_mem_free(ptr, size);
+  }
+  static inline size_t align_size(size_t size) {
+    return renderer_mem_align_size(size);
+  }
 };
 
 #endif // RENDERER_MEMORY_H

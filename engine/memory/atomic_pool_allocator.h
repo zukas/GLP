@@ -1,18 +1,15 @@
 #ifndef ATOMIC_POOL_ALLOCATOR_H
 #define ATOMIC_POOL_ALLOCATOR_H
 
-#include "memory.h"
+#include "global_heap_memory.h"
 
 #include <atomic>
 
-template <size_t _S, size_t _On, typename __Ma = sys_allocator>
-class atomic_pool_allocator {
-protected:
-  using t_type = raw *;
-
+template <size_t _S, size_t _On, typename __Ma = global_heap_allocator>
+class atomic_pool_allocator : __Ma {
 public:
-  atomic_pool_allocator() : m_blk(__Ma::acquire(size())) {
-    atomic_pool_node_t *node = static_cast<atomic_pool_node_t *>(m_blk.ptr);
+  atomic_pool_allocator() : m_buffer(__Ma::alloc(size())) {
+    atomic_pool_node_t *node = static_cast<atomic_pool_node_t *>(m_buffer);
     atomic_pool_node_t *root = node;
     for (size_t i = 1; i < _On - 1; i++) {
       atomic_pool_node_t *next = node + 1;
@@ -24,7 +21,7 @@ public:
     m_root = root;
   }
 
-  ~atomic_pool_allocator() { __Ma::release(m_blk); }
+  ~atomic_pool_allocator() { __Ma::free(m_buffer, size()); }
   atomic_pool_allocator(const atomic_pool_allocator &) = delete;
   atomic_pool_allocator(atomic_pool_allocator &&) = delete;
 
@@ -37,7 +34,7 @@ public:
     return tmp;
   }
 
-  void free(raw *p) {
+  void free(raw *p, size_t = 0) {
     atomic_pool_node_t *ptr = static_cast<atomic_pool_node_t *>(p);
     atomic_pool_node_t *tmp = m_root.load(std::memory_order_acquire);
     ptr->next.store(tmp, std::memory_order_release);
@@ -47,8 +44,10 @@ public:
     }
   }
 
-  constexpr static size_t size() { return _S * _On; }
-  constexpr static size_t opt_size(size_t) { return _S; }
+  constexpr size_t size() const { return align_size() * _On; }
+  size_t align_size(size_t = 0) const {
+    return align_block<sizeof(atomic_pool_node_t)>(_S);
+  }
 
 private:
   struct atomic_pool_node_t {
@@ -56,7 +55,7 @@ private:
   };
 
 private:
-  memblk m_blk;
+  raw *m_buffer;
   std::atomic<atomic_pool_node_t *> m_root;
 };
 

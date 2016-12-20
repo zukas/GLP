@@ -1,31 +1,28 @@
 #ifndef DYNAMIC_BLOCK_ALLOCATOR_H
 #define DYNAMIC_BLOCK_ALLOCATOR_H
 
-#include "memory.h"
+#include "global_heap_memory.h"
 #include <cassert>
 
-template <size_t _S, typename __Ma = sys_allocator, size_t _A = 16>
-class dynamic_block_allocator {
+template <size_t _S, typename __Ma = global_heap_allocator, size_t _A = 16>
+class dynamic_block_allocator : __Ma {
   static_assert(_A >= 16, "Alignment must be at least 16 bytes");
   static_assert(_S > 0, "Size must be more then zero");
 
-protected:
-  using t_type = memblk;
-
 public:
-  dynamic_block_allocator() : m_blk(__Ma::acquire(_S)) {
-    m_root = static_cast<block_node_t *>(m_blk.ptr);
+  dynamic_block_allocator() : m_buffer(__Ma::alloc(size())) {
+    m_root = static_cast<block_node_t *>(m_buffer);
     m_root->next = nullptr;
     m_root->size = _S;
   }
 
   ~dynamic_block_allocator() {
-    __Ma::release(m_blk);
-    m_blk = {nullptr, 0};
+    __Ma::free(m_buffer, size());
+    m_buffer = nullptr;
     m_root = nullptr;
   }
 
-  memblk alloc(size_t size) {
+  raw *alloc(size_t size) {
     size = align_block<_A>(size);
     raw *res = nullptr;
     {
@@ -58,25 +55,25 @@ public:
       assert(m_root != nullptr);
       res = static_cast<raw *>(node);
     }
-    return {res, size};
+    return res;
   }
 
-  void free(memblk blk) {
-    assert(owns(blk));
-
+  void free(raw *ptr, size_t size) {
+    assert(owns(ptr));
+    size = align_block<_A>(size);
     block_node_t *node = m_root;
 
-    if (blk.ptr < node || node == nullptr) {
-      block_node_t *tmp = static_cast<block_node_t *>(blk.ptr);
+    if (ptr < node || node == nullptr) {
+      block_node_t *tmp = static_cast<block_node_t *>(ptr);
       block_node_t *next = nullptr;
       size_t block_size = 0;
-      raw *adjusted = address_add(blk.ptr, blk.size);
+      raw *adjusted = address_add(ptr, size);
       if (adjusted == node) {
         next = node->next;
-        block_size = blk.size + node->size;
+        block_size = size + node->size;
       } else {
         next = node;
-        block_size = blk.size;
+        block_size = size;
       }
       tmp->next = next;
       tmp->size = block_size;
@@ -84,29 +81,29 @@ public:
     } else {
 
       block_node_t *next = node->next;
-      while (next < blk.ptr) {
+      while (next < ptr) {
         node = next;
         next = next->next;
       }
       size_t block_size = node->size;
 
       raw *end_node = address_add(node, block_size);
-      raw *end_blk = address_add(blk.ptr, blk.size);
+      raw *end_blk = address_add(ptr, size);
 
-      if (end_node == blk.ptr && end_blk == next) {
-        block_size += blk.size + node->next->size;
+      if (end_node == ptr && end_blk == next) {
+        block_size += size + node->next->size;
         next = next->next;
-      } else if (end_node == blk.ptr && end_blk < next) {
-        block_size += blk.size;
-      } else if (end_node < blk.ptr && end_blk == next) {
-        block_node_t *tmp = static_cast<block_node_t *>(blk.ptr);
+      } else if (end_node == ptr && end_blk < next) {
+        block_size += size;
+      } else if (end_node < ptr && end_blk == next) {
+        block_node_t *tmp = static_cast<block_node_t *>(ptr);
         tmp->next = next->next;
-        tmp->size = blk.size + next->size;
+        tmp->size = size + next->size;
         next = tmp;
       } else {
-        block_node_t *tmp = static_cast<block_node_t *>(blk.ptr);
+        block_node_t *tmp = static_cast<block_node_t *>(ptr);
         tmp->next = next;
-        tmp->size = blk.size;
+        tmp->size = size;
         next = tmp;
       }
 
@@ -115,18 +112,15 @@ public:
     }
   }
 
-  bool owns(memblk blk) {
-    return blk.ptr >= m_blk.ptr &&
-           blk.ptr <= address_add(m_blk.ptr, m_blk.size - blk.size - 1);
+  bool owns(raw *ptr) {
+    return ptr >= m_buffer && ptr < address_add(m_buffer, size());
   }
 
-  constexpr static size_t size() { return _S; }
-  constexpr static size_t opt_size(size_t size) {
-    return align_block<_A>(size);
-  }
+  size_t size() const { return _S; }
+  size_t align_size(size_t size) const { return align_block<_A>(size); }
 
 private:
-  memblk m_blk;
+  raw *m_buffer;
   block_node_t *m_root;
 };
 

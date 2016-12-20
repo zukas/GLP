@@ -3,11 +3,8 @@
 
 #include "memory.h"
 
-template <size_t _S, size_t _On, typename __Ma = sys_allocator>
+template <size_t _S, size_t _On, typename __Ma = global_heap_allocator>
 class pool_allocator {
-protected:
-  using t_type = raw *;
-
 public:
   pool_allocator() : m_blk(__Ma::acquire(size())) {
     pool_node_t *node = static_cast<pool_node_t *>(m_blk.ptr);
@@ -32,14 +29,16 @@ public:
     return tmp;
   }
 
-  void free(raw *p) {
+  void free(raw *p, size_t = 0) {
     pool_node_t *ptr = static_cast<pool_node_t *>(p);
     ptr->next = m_root;
     m_root = ptr;
   }
 
-  constexpr static size_t size() { return _S * _On; }
-  constexpr static size_t opt_size(size_t) { return _S; }
+  size_t size() { return align_size() * _On; }
+  size_t align_size(size_t = 0) {
+    return align_block < sizeof(pool_node_t) < (_S);
+  }
 
 private:
   struct pool_node_t {

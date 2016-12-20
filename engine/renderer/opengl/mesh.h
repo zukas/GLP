@@ -15,6 +15,6 @@ uint32_t create_mesh_gl(const vertex *__restrict vertexes, long v_size,
 
 void destroy_mesh_gl(uint32_t mesh);
 
-void render_mesh_gl(uint32_t mesh_id, int32_t e_size);
+void render_mesh_gl(uint32_t mesh_id);
 
 #endif // MESH_OPENGL_H

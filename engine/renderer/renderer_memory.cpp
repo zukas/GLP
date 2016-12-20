@@ -1,24 +1,23 @@
 #include "renderer_memory.h"
 
 #include "memory/dynamic_block_allocator.h"
-#include "utils/static_instance_factory.h"
+#include "memory/global_stack_memory.h"
 
-using G_REM = static_instance_factory<dynamic_block_allocator<MB(16)>>;
+using allocator = dynamic_block_allocator<MB(16)>;
 
-void renderer_mem_init() { G_REM::init(); }
+static allocator *g_renderer{nullptr};
 
-void renderer_mem_deinit() { G_REM::deinit(); }
+void renderer_mem_init() { g_renderer = global_stack_make_new<allocator>(); }
 
-void *renderer_mem_alloc(size_t size) { return G_REM::get().alloc(size).ptr; }
-
-void renderer_mem_free(void *ptr, size_t size) {
-  auto &tmp = G_REM::get();
-  size = tmp.opt_size(size);
-  G_REM::get().free({ptr, size});
+void renderer_mem_deinit() {
+  global_stack_destroy(g_renderer);
+  g_renderer = nullptr;
 }
 
-memblk renderer_allocator::acquire(size_t size) {
-  return G_REM::get().alloc(size);
-}
+void *renderer_mem_alloc(size_t size) { return g_renderer->alloc(size); }
 
-void renderer_allocator::release(memblk blk) { G_REM::get().free(blk); }
+void renderer_mem_free(void *ptr, size_t size) { g_renderer->free(ptr, size); }
+
+size_t renderer_mem_align_size(size_t size) {
+  return g_renderer->align_size(size);
+}

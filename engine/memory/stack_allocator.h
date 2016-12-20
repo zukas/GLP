@@ -1,42 +1,38 @@
 #ifndef STACK_ALLOCATOR_H
 #define STACK_ALLOCATOR_H
 
-#include "memory.h"
+#include "global_heap_memory.h"
 
-template <size_t _S, typename __Ma = sys_allocator, size_t _A = 16>
-class stack_allocator {
-protected:
-  using t_type = memblk;
-
+template <size_t _S, typename __Ma = global_heap_allocator, size_t _A = 16>
+class stack_allocator : __Ma {
 public:
-  stack_allocator() : m_blk(__Ma::acquire(_S)), m_cursor(m_blk.ptr) {}
+  stack_allocator() : m_buffer(__Ma::alloc(_S)), m_cursor(m_buffer) {}
   stack_allocator(const stack_allocator &) = delete;
   stack_allocator(stack_allocator &&) = delete;
-  ~stack_allocator() { __Ma::release(m_blk); }
+  ~stack_allocator() { __Ma::free(m_buffer, _S); }
 
-  memblk alloc(size_t size) {
+  raw *alloc(size_t size) {
     size = align_block<_A>(size);
     raw *ptr = m_cursor;
     m_cursor = address_add(m_cursor, size);
-    return {ptr, size};
+    return ptr;
   }
 
-  void free(memblk blk) {
-    raw *ptr = address_sub(blk.ptr, blk.size);
-    if (ptr == m_cursor) {
-      m_cursor = blk.ptr;
+  void free(raw *ptr, size_t size) {
+    size = align_block<_A>(size);
+    raw *tmp = address_sub(ptr, size);
+    if (tmp == m_cursor) {
+      m_cursor = ptr;
     }
   }
 
-  constexpr static size_t size() { return _S; }
-  constexpr static size_t opt_size(size_t size) {
-    return align_block<_A>(size);
-  }
+  size_t size() { return _S; }
+  size_t align_size(size_t size) { return align_block<_A>(size); }
 
-  void clear() { m_cursor = m_blk.ptr; }
+  void clear() { m_cursor = m_buffer; }
 
 private:
-  memblk m_blk;
+  raw *m_buffer;
   raw *m_cursor;
 };
 

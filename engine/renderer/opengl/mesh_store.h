@@ -12,10 +12,12 @@ public:
   mesh_store(size_t count);
   ~mesh_store();
 
-  void store(uint32_t mesh_id, mesh_buffer_gl mesh);
-  mesh_buffer_gl get(uint32_t mesh_id);
+  void store(uint32_t mesh_id, long elems, mesh_buffer_gl mesh);
+  long get_elem_count(uint32_t mesh_id) const;
+  mesh_buffer_gl get_buffers(uint32_t mesh_id) const;
 
 private:
+  long *m_elems;
   mesh_buffer_gl *m_buffers;
   size_t m_count;
 };

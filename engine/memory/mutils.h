@@ -26,6 +26,10 @@ template <size_t blk_size> constexpr bool is_aligned(const raw *__restrict p) {
   return reinterpret_cast<uintptr_t>(p) % blk_size == 0;
 }
 
+template <typename _Tp> constexpr _Tp min(_Tp x, _Tp y) {
+  return y ^ ((x ^ y) & -(x < y));
+}
+
 template <typename T> constexpr T max(T x, T y) {
   return x ^ ((x ^ y) & -(x < y));
 }

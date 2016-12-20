@@ -3,8 +3,8 @@
 #include "memory/atomic_pool_allocator.h"
 #include "utils/static_instance_factory.h"
 
-using G_IOM =
-    static_instance_factory<atomic_pool_allocator<512, 1024, sys_allocator>>;
+using G_IOM = static_instance_factory<
+    atomic_pool_allocator<512, 1024, global_heap_allocator>>;
 
 void io_mem_init() { G_IOM::init(); }
 

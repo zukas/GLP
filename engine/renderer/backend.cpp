@@ -18,13 +18,18 @@ void load_backend(const char *__restrict name,
     mapper->handle = handle;
     mapper->init = reinterpret_cast<init_fn>(dlsym(handle, "init"));
     mapper->deinit = reinterpret_cast<deinit_fn>(dlsym(handle, "deinit"));
-    mapper->render = reinterpret_cast<render_fn>(dlsym(handle, "render"));
+    mapper->begin_frame =
+        reinterpret_cast<begin_frame_fn>(dlsym(handle, "begin_frame"));
+    mapper->end_frame =
+        reinterpret_cast<begin_frame_fn>(dlsym(handle, "end_frame"));
     mapper->init_mesh_store =
         reinterpret_cast<init_mesh_store_fn>(dlsym(handle, "init_mesh_store"));
     mapper->create_mesh =
         reinterpret_cast<create_mesh_fn>(dlsym(handle, "create_mesh"));
     mapper->destroy_mesh =
         reinterpret_cast<destroy_mesh_fn>(dlsym(handle, "destroy_mesh"));
+    mapper->render_mesh =
+        reinterpret_cast<render_mesh_fn>(dlsym(handle, "render_mesh"));
   }
 }
 
