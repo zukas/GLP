@@ -1,11 +1,7 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
-class Interface {
-public:
-  Interface();
-  bool init();
-  void deinit();
-};
+bool ui_init();
+void ui_deinit();
 
 #endif // INTERFACE_H

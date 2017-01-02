@@ -1,0 +1,4 @@
+#ifndef RENDERER_INFO_H
+#define RENDERER_INFO_H
+
+#endif // RENDERER_INFO_H

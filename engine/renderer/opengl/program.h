@@ -5,10 +5,10 @@
 
 #include <cstdint>
 
-uint32_t compile_shader_v(const char **sources, int32_t count);
-uint32_t compile_shader_f(const char **sources, int32_t count);
-uint32_t compile_shader_g(const char **sources, int32_t count);
-uint32_t compile_shader_t(const char **sources, int32_t count);
+uint32_t compile_shader_vertex(const char **sources, int32_t count);
+uint32_t compile_shader_fragment(const char **sources, int32_t count);
+uint32_t compile_shader_geometry(const char **sources, int32_t count);
+uint32_t compile_shader_tessellation(const char **sources, int32_t count);
 void destroy_shader(uint32_t shader_id);
 
 uint32_t complie_program(const uint32_t *schaders, int32_t count);

@@ -1,11 +1,7 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
-class Audio {
-public:
-  Audio();
-  bool init();
-  void deinit();
-};
+bool audio_init();
+void audio_deinit();
 
 #endif // AUDIO_H

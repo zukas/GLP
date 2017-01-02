@@ -6,20 +6,14 @@
 #include <cstddef>
 #include <cstdint>
 
-class mesh_store {
-public:
-  mesh_store();
-  mesh_store(size_t count);
-  ~mesh_store();
+typedef struct { uint32_t data[2]; } mesh_buffer_gl;
 
-  void store(uint32_t mesh_id, long elems, mesh_buffer_gl mesh);
-  long get_elem_count(uint32_t mesh_id) const;
-  mesh_buffer_gl get_buffers(uint32_t mesh_id) const;
+bool mesh_store_gl_init(long count);
+void mesh_store_gl_deinit();
 
-private:
-  long *m_elems;
-  mesh_buffer_gl *m_buffers;
-  size_t m_count;
-};
+void mesh_store_gl_store(uint32_t mesh_id, long elems, mesh_buffer_gl buffers);
+mesh_buffer_gl mesh_store_gl_get_buffers(uint32_t mesh_id);
+void mesh_store_gl_get_elements(const uint32_t *mesh_ids, long *elem_counts,
+                                long size);
 
 #endif // MESH_STORE_H

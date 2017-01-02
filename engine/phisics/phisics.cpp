@@ -1,7 +1,5 @@
 #include "phisics.h"
 
-Phisics::Phisics() {}
+bool phisics_init() { return true; }
 
-bool Phisics::init() { return true; }
-
-void Phisics::deinit() {}
+void phisics_deinit() {}

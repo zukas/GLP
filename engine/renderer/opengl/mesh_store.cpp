@@ -3,47 +3,50 @@
 #include "mesh.h"
 #include "renderer/renderer_memory.h"
 
-#include <cstring>
+struct {
+  long *elems;
+  mesh_buffer_gl *buffers;
+  long count;
+} __mesh_store;
 
-mesh_store::mesh_store() : m_buffers(nullptr), m_count(0) {}
-
-mesh_store::mesh_store(size_t count)
-    : m_elems(static_cast<long *>(renderer_mem_alloc(sizeof(long) * count))),
-      m_buffers(static_cast<mesh_buffer_gl *>(
-          renderer_mem_alloc(sizeof(mesh_buffer_gl) * count))),
-      m_count(count) {
-  memset(m_elems, 0, sizeof(long) * count);
-  memset(m_buffers, 0, sizeof(mesh_buffer_gl) * count);
+bool mesh_store_gl_init(long count) {
+  assert(count > 0);
+  __mesh_store.elems = renderer_make_array<long>(count);
+  __mesh_store.buffers = renderer_make_array<mesh_buffer_gl>(count);
+  __mesh_store.count = count;
 }
 
-mesh_store::~mesh_store() {
+void mesh_store_gl_deinit() {
 
-  if (m_elems) {
-    renderer_mem_free(m_elems, sizeof(long) * m_count);
-    m_elems = nullptr;
+  if (__mesh_store.elems) {
+    renderer_destroy_array(__mesh_store.elems, __mesh_store.count);
+    __mesh_store.elems = nullptr;
   }
 
-  if (m_buffers) {
-    renderer_mem_free(m_buffers, sizeof(mesh_buffer_gl) * m_count);
-    m_buffers = nullptr;
+  if (__mesh_store.buffers) {
+    renderer_destroy_array(__mesh_store.buffers, __mesh_store.count);
+    __mesh_store.buffers = nullptr;
   }
 }
 
-void mesh_store::store(uint32_t mesh_id, long elems, mesh_buffer_gl buffer) {
+void mesh_store_gl_store(uint32_t mesh_id, long elems, mesh_buffer_gl buffers) {
   mesh_id--;
-  assert(mesh_id < m_count);
-  m_elems[mesh_id] = elems;
-  m_buffers[mesh_id] = buffer;
+  assert(mesh_id < __mesh_store.count);
+  __mesh_store.elems[mesh_id] = elems;
+  __mesh_store.buffers[mesh_id] = buffers;
 }
 
-long mesh_store::get_elem_count(uint32_t mesh_id) const {
+mesh_buffer_gl mesh_store_gl_get_buffers(uint32_t mesh_id) {
   mesh_id--;
-  assert(mesh_id < m_count);
-  return m_elems[mesh_id];
+  assert(mesh_id < __mesh_store.count);
+  return __mesh_store.buffers[mesh_id];
 }
 
-mesh_buffer_gl mesh_store::get_buffers(uint32_t mesh_id) const {
-  mesh_id--;
-  assert(mesh_id < m_count);
-  return m_buffers[mesh_id];
+void mesh_store_gl_get_elements(const uint32_t *mesh_ids, long *elem_counts,
+                                long size) {
+  for (long i = 0; i < size; i++) {
+    uint32_t mesh_id = mesh_ids[i] - 1;
+    assert(mesh_id < __mesh_store.count);
+    elem_counts[i] = __mesh_store.elems[mesh_id];
+  }
 }

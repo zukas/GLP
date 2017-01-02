@@ -10,13 +10,13 @@ bool global_stack_init(size_t size);
 void global_stack_deinit();
 
 size_t global_stack_align_size(size_t size);
-raw *global_stack_alloc(size_t size);
-void global_stack_free(raw *ptr, size_t size);
-bool global_stack_owns(raw *ptr);
+void *global_stack_alloc(size_t size);
+void global_stack_free(void *ptr, size_t size);
+bool global_stack_owns(void *ptr);
 
 struct global_stack_allocator {
-  static inline raw *alloc(size_t size) { return global_stack_alloc(size); }
-  static inline void free(raw *ptr, size_t size) {
+  static inline void *alloc(size_t size) { return global_stack_alloc(size); }
+  static inline void free(void *ptr, size_t size) {
     global_stack_free(ptr, size);
   }
   static inline size_t align_size(size_t size) {

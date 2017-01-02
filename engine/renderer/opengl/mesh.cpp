@@ -2,11 +2,7 @@
 
 #include "gl_headers.h"
 #include "mesh_store.h"
-#include "utils/static_instance_factory.h"
-
-using G_MS = static_instance_factory<mesh_store>;
-
-void init_mesh_store_gl(size_t count) { G_MS::init(count); }
+#include "renderer/renderer_memory.h"
 
 uint32_t create_mesh_gl(const vertex *__restrict vertexes, long v_size,
                         const uint32_t *__restrict indexes, long i_size) {
@@ -57,19 +53,24 @@ uint32_t create_mesh_gl(const vertex *__restrict vertexes, long v_size,
                i_size * static_cast<long>(sizeof(uint32_t)), indexes,
                GL_STATIC_DRAW);
   glBindVertexArray(0);
-  G_MS::get().store(mesh_id, i_size, buffer);
+  mesh_store_gl_store(mesh_id, i_size, buffer);
   return mesh_id;
 }
 
 void destroy_mesh_gl(uint32_t mesh_id) {
-  mesh_buffer_gl buffer = G_MS::get().get_buffers(mesh_id);
+  mesh_buffer_gl buffer = mesh_store_gl_get_buffers(mesh_id);
   glDeleteBuffers(2, buffer.data);
   glDeleteVertexArrays(1, &mesh_id);
 }
 
-void render_mesh_gl(uint32_t mesh_id) {
-  long elems = G_MS::get().get_elem_count(mesh_id);
-  glBindVertexArray(mesh_id);
-  glDrawElements(GL_TRIANGLES, elems, GL_UNSIGNED_INT, nullptr);
-  glBindVertexArray(0);
+void render_meshes_gl(const uint32_t *mesh_ids, long size) {
+
+  long *elems = renderer_make_array<long>(size);
+  mesh_store_gl_get_elements(mesh_ids, elems, size);
+  for (long i = 0; i < size; i++) {
+    glBindVertexArray(mesh_ids[i]);
+    glDrawElements(GL_TRIANGLES, elems[i], GL_UNSIGNED_INT, nullptr);
+    glBindVertexArray(0);
+  }
+  renderer_destroy_array(elems, size);
 }

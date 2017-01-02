@@ -1,59 +1,44 @@
 #include "renderer.h"
 
-#include "engine_global.h"
-#include "renderer_memory.h"
+#include "vk/frame_buffers.h"
+#include "vk/graphics_pipeline.h"
+#include "vk/image_views.h"
+#include "vk/instance.h"
+#include "vk/logical_device.h"
+#include "vk/phisical_device.h"
+#include "vk/queue.h"
+#include "vk/swap_chain.h"
+#include "vk/window.h"
 
 #include <cstring>
 
-Render::Render() : m_mesh_store(nullptr), m_mesh_store_size(0) {
-  renderer_mem_init();
+// Interface functions
+
+bool renderer_init(const engine_description &desc) {
+
+  bool status = vk_window_init(desc.app.app_name);
+  status = status && vk_instance_init(desc.app);
+  status = status && vk_window_surface_init();
+  status = status && vk_ph_device_init(desc.device);
+  status = status && vk_lg_device_init();
+  status = status && vk_queue_init();
+  status = status && vk_swap_chain_init();
+  status = status && vk_image_views_init();
+  status = status && vk_frame_buffers_init(1024);
+  status = status && vk_pipeline_init(1024);
+  return status;
 }
 
-Render::~Render() { renderer_mem_deinit(); }
+void renderer_deinit() {
 
-void Render::deinit() { m_backend.deinit(); }
-
-bool Render::initOpenGL() {
-  m_backend.load(Backend::OpengGL);
-  return m_backend.init();
-}
-
-bool Render::initVulkan() {
-  m_backend.load(Backend::Vulkan);
-  return m_backend.init();
-}
-
-void Render::render() {
-  m_backend.begin_frame();
-  const long m_count = static_cast<long>(m_mesh_store_size);
-  for (long i = 0; i < m_count; ++i) {
-    m_backend.render_mesh(m_mesh_store[i]);
-  }
-  m_backend.end_frame();
-}
-
-void Render::init_mesh_store(size_t count) { m_backend.init_mesh_store(count); }
-
-uint32_t Render::create_mesh(vertex *vertexes, long v_size, uint32_t *indexes,
-                             long i_size) {
-  m_backend.create_mesh(vertexes, v_size, indexes, i_size);
-}
-
-void Render::destroy_mesh(uint32_t mesh_id) { m_backend.destroy_mesh(mesh_id); }
-
-void Render::set_mesh_store(uint32_t *mesh_ids, size_t count) {
-  if (count > m_mesh_store_size) {
-    uint32_t *store =
-        static_cast<uint32_t *>(renderer_mem_alloc(sizeof(uint32_t) * count));
-    memcpy(store, mesh_ids, sizeof(uint32_t) * count);
-    uint32_t *old = m_mesh_store;
-    size_t old_size = m_mesh_store_size;
-    m_mesh_store = store;
-    m_mesh_store_size = count;
-    if (old != nullptr) {
-      renderer_mem_free(old, sizeof(uint32_t) * old_size);
-    }
-  } else {
-    memcpy(m_mesh_store, mesh_ids, sizeof(uint32_t) * count);
-  }
+  vk_pipeline_deinit();
+  vk_frame_buffers_deinit();
+  vk_image_views_deinit();
+  vk_swap_chain_deinit();
+  vk_queue_deinit();
+  vk_lg_device_deinit();
+  vk_ph_device_deinit();
+  vk_window_surface_deinit();
+  vk_instance_deinit();
+  vk_window_deinit();
 }

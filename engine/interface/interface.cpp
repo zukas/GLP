@@ -1,7 +1,5 @@
 #include "interface.h"
 
-Interface::Interface() {}
+bool ui_init() { return true; }
 
-bool Interface::init() { return true; }
-
-void Interface::deinit() {}
+void ui_deinit() {}

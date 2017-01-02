@@ -5,7 +5,7 @@
 #include <mutex>
 
 struct {
-  raw *buffer;
+  void *buffer;
   size_t size;
   block_node_t *root;
   std::mutex lock;
@@ -27,7 +27,7 @@ bool global_stack_init(size_t size) {
   size = align_block<GLOBAL_STACK_ALIGNMENT>(size);
 
   std::lock_guard<std::mutex> _lock(__global_stack.lock);
-  assert(m_buffer == nullptr);
+  assert(__global_stack.buffer == nullptr);
 
   __global_stack.buffer = global_heap_alloc(size);
   __global_stack.size = global_stack_align_size(size);
@@ -65,9 +65,9 @@ size_t global_stack_align_size(size_t size) {
   return align_block<GLOBAL_STACK_ALIGNMENT>(size);
 }
 
-raw *global_stack_alloc(size_t size) {
+void *global_stack_alloc(size_t size) {
   size = align_block<GLOBAL_STACK_ALIGNMENT>(size);
-  raw *res = nullptr;
+  void *res = nullptr;
 
   {
     std::lock_guard<std::mutex> _lock(__global_stack.lock);
@@ -98,8 +98,8 @@ raw *global_stack_alloc(size_t size) {
       __global_stack.root = next;
     }
 
-    assert(m_root != nullptr);
-    res = static_cast<raw *>(node);
+    assert(__global_stack.root != nullptr);
+    res = static_cast<void *>(node);
 
 #ifdef ALLOCATOR_STATS
     allocator_stats.count++;
@@ -112,7 +112,7 @@ raw *global_stack_alloc(size_t size) {
   return res;
 }
 
-void global_stack_free(raw *ptr, size_t size) {
+void global_stack_free(void *ptr, size_t size) {
 
   assert(global_stack_owns(ptr));
   size = align_block<GLOBAL_STACK_ALIGNMENT>(size);
@@ -125,7 +125,7 @@ void global_stack_free(raw *ptr, size_t size) {
     block_node_t *tmp = static_cast<block_node_t *>(ptr);
     block_node_t *next = nullptr;
     size_t block_size = 0;
-    raw *adjusted = address_add(ptr, size);
+    void *adjusted = address_add(ptr, size);
     if (adjusted == node) {
       next = node->next;
       block_size = size + node->size;
@@ -145,8 +145,8 @@ void global_stack_free(raw *ptr, size_t size) {
     }
     size_t block_size = node->size;
 
-    raw *end_node = address_add(node, block_size);
-    raw *end_blk = address_add(ptr, size);
+    void *end_node = address_add(node, block_size);
+    void *end_blk = address_add(ptr, size);
 
     if (end_node == ptr && end_blk == next) {
       block_size += size + node->next->size;
@@ -175,7 +175,7 @@ void global_stack_free(raw *ptr, size_t size) {
 #endif
 }
 
-bool global_stack_owns(raw *ptr) {
-  return __global_stack.buffer >= ptr &&
-         address_add(__global_stack.buffer, __global_stack.size) < ptr;
+bool global_stack_owns(void *ptr) {
+  return __global_stack.buffer <= ptr &&
+         address_add(__global_stack.buffer, __global_stack.size) > ptr;
 }

@@ -22,9 +22,9 @@ public:
     m_root = nullptr;
   }
 
-  raw *alloc(size_t size) {
+  void *alloc(size_t size) {
     size = align_block<_A>(size);
-    raw *res = nullptr;
+    void *res = nullptr;
     {
       block_node_t *parent = nullptr;
       block_node_t *node = m_root;
@@ -53,12 +53,12 @@ public:
       }
 
       assert(m_root != nullptr);
-      res = static_cast<raw *>(node);
+      res = static_cast<void *>(node);
     }
     return res;
   }
 
-  void free(raw *ptr, size_t size) {
+  void free(void *ptr, size_t size) {
     assert(owns(ptr));
     size = align_block<_A>(size);
     block_node_t *node = m_root;
@@ -67,7 +67,7 @@ public:
       block_node_t *tmp = static_cast<block_node_t *>(ptr);
       block_node_t *next = nullptr;
       size_t block_size = 0;
-      raw *adjusted = address_add(ptr, size);
+      void *adjusted = address_add(ptr, size);
       if (adjusted == node) {
         next = node->next;
         block_size = size + node->size;
@@ -87,8 +87,8 @@ public:
       }
       size_t block_size = node->size;
 
-      raw *end_node = address_add(node, block_size);
-      raw *end_blk = address_add(ptr, size);
+      void *end_node = address_add(node, block_size);
+      void *end_blk = address_add(ptr, size);
 
       if (end_node == ptr && end_blk == next) {
         block_size += size + node->next->size;
@@ -112,7 +112,7 @@ public:
     }
   }
 
-  bool owns(raw *ptr) {
+  bool owns(void *ptr) {
     return ptr >= m_buffer && ptr < address_add(m_buffer, size());
   }
 
@@ -120,7 +120,7 @@ public:
   size_t align_size(size_t size) const { return align_block<_A>(size); }
 
 private:
-  raw *m_buffer;
+  void *m_buffer;
   block_node_t *m_root;
 };
 

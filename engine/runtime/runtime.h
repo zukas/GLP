@@ -1,19 +1,9 @@
 #ifndef RUNTIME_H
 #define RUNTIME_H
 
-class Runtime {
-public:
-  Runtime();
-  ~Runtime();
-  void run();
+#include "engine_info.h"
 
-private:
-  class IO *io;
-  class Resource *resource;
-  class Audio *audio;
-  class Render *render;
-  class Interface *hud;
-  class Phisics *phisics;
-};
+bool runtime_init(const engine_description &desc);
+void runtime_deinit();
 
 #endif // RUNTIME_H

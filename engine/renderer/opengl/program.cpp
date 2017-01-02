@@ -21,25 +21,25 @@ void compile_generic_shader(uint32_t shader_id, const char **sources,
   }
 }
 
-uint32_t compile_shader_v(const char **sources, int32_t count) {
+uint32_t compile_shader_vertex(const char **sources, int32_t count) {
   uint32_t shader_id = glCreateShader(GL_VERTEX_SHADER);
   compile_generic_shader(shader_id, sources, count);
   return shader_id;
 }
 
-uint32_t compile_shader_f(const char **sources, int32_t count) {
+uint32_t compile_shader_fragment(const char **sources, int32_t count) {
   uint32_t shader_id = glCreateShader(GL_FRAGMENT_SHADER);
   compile_generic_shader(shader_id, sources, count);
   return shader_id;
 }
 
-uint32_t compile_shader_g(const char **sources, int32_t count) {
+uint32_t compile_shader_geometry(const char **sources, int32_t count) {
   uint32_t shader_id = glCreateShader(GL_GEOMETRY_SHADER);
   compile_generic_shader(shader_id, sources, count);
   return shader_id;
 }
 
-uint32_t compile_shader_t(const char **sources, int32_t count) {
+uint32_t compile_shader_tessellation(const char **sources, int32_t count) {
   uint32_t shader_id = glCreateShader(GL_TESS_CONTROL_SHADER);
   compile_generic_shader(shader_id, sources, count);
   return shader_id;

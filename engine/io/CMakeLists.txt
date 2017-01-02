@@ -10,4 +10,4 @@ file(GLOB SOURCE_FILES
     )
 
 add_library(${PROJECT_NAME} STATIC ${HEADER_FILES} ${SOURCE_FILES})
-target_link_libraries(${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME} memory)

@@ -1,34 +1,10 @@
 #ifndef RENDER_H
 #define RENDER_H
 
-#include "backend.h"
-#include "gpu_primitives.h"
-#include <utils/global_instance.h>
+#include "engine_info.h"
+#include "renderer_data.h"
 
-class Render : public global_instance<Render> {
-public:
-  Render();
-  ~Render();
-
-  bool initOpenGL();
-  bool initVulkan();
-  void deinit();
-
-  void render();
-
-  void init_mesh_store(size_t count);
-  uint32_t create_mesh(vertex *vertexes, long v_size, uint32_t *indexes,
-                       long i_size);
-  void destroy_mesh(uint32_t mesh_id);
-
-  void set_mesh_store(uint32_t *mesh_ids, size_t count);
-
-private:
-  Backend m_backend;
-  uint32_t *m_mesh_store;
-  size_t m_mesh_store_size;
-};
-
-using G_Renderer = global_instance<Render>;
+bool renderer_init(const engine_description &desc);
+void renderer_deinit();
 
 #endif // RENDER_H

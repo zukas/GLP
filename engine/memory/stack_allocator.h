@@ -11,16 +11,16 @@ public:
   stack_allocator(stack_allocator &&) = delete;
   ~stack_allocator() { __Ma::free(m_buffer, _S); }
 
-  raw *alloc(size_t size) {
+  void *alloc(size_t size) {
     size = align_block<_A>(size);
-    raw *ptr = m_cursor;
+    void *ptr = m_cursor;
     m_cursor = address_add(m_cursor, size);
     return ptr;
   }
 
-  void free(raw *ptr, size_t size) {
+  void free(void *ptr, size_t size) {
     size = align_block<_A>(size);
-    raw *tmp = address_sub(ptr, size);
+    void *tmp = address_sub(ptr, size);
     if (tmp == m_cursor) {
       m_cursor = ptr;
     }
@@ -32,8 +32,8 @@ public:
   void clear() { m_cursor = m_buffer; }
 
 private:
-  raw *m_buffer;
-  raw *m_cursor;
+  void *m_buffer;
+  void *m_cursor;
 };
 
 #endif // STACK_ALLOCATOR_H

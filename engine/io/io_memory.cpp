@@ -1,17 +1,16 @@
 #include "io_memory.h"
 
 #include "memory/atomic_pool_allocator.h"
-#include "utils/static_instance_factory.h"
+#include "memory/type_allocator.h"
 
-using G_IOM = static_instance_factory<
-    atomic_pool_allocator<512, 1024, global_heap_allocator>>;
+struct {
+  type_allocator<char, atomic_pool_allocator> io_buffer;
+} __context;
 
-void io_mem_init() { G_IOM::init(); }
+bool io_buffers_init() { __context.io_buffer.init(IO_BUFFER_SIZE, IO_BACKLOG); }
 
-void io_mem_deinit() { G_IOM::deinit(); }
+void io_buffers_deinit() { __context.io_buffer.deinit(); }
 
-size_t io_mem_buffer_size() { return 512; }
+char *io_buffers_get() { return __context.io_buffer.make_new(); }
 
-char *io_buffer_alloc() { return static_cast<char *>(G_IOM::get().alloc()); }
-
-void io_buffer_free(char *buffer) { G_IOM::get().free(buffer); }
+void io_buffer_release(char *ptr) { __context.io_buffer.destroy(ptr); }

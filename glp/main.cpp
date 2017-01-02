@@ -1,19 +1,68 @@
-#include "renderer/geometry/types.h"
-#include "renderer/renderer.h"
-#include "runtime/runtime.h"
+#include "engine_include.h"
+#include "memory/global_malloc.h"
+#include "renderer/vk/graphics_pipeline.h"
+
+#include <cstdio>
+
+struct file_info {
+  char *data;
+  size_t size;
+};
+
+file_info load_file(const char *name) {
+  FILE *file = fopen(name, "rb");
+  if (file) {
+
+    char *buffer = static_cast<char *>(glp_malloc(16 * 1024));
+    size_t size = fread(buffer, 1, 16 * 1024, file);
+    fclose(file);
+    return {buffer, size};
+  }
+  return {nullptr, 0};
+}
+
+void release_file(file_info info) {
+  if (info.data) {
+    glp_free(info.data);
+  }
+}
 
 int main() {
-  Runtime e;
+  engine_description desc;
 
-  constexpr uint32_t v_size = vertex_size_sphere3(32);
-  constexpr uint32_t i_size = index_size_sphere3(32);
-  vertex vertexes[v_size];
-  uint32_t indexes[i_size];
-  generate_sphere3(sphere3{glm::vec3{0.f, 0.f, 0.f}, 3.f}, vertexes, indexes,
-                   32);
-  G_Renderer::get()->init_mesh_store(16);
-  uint32_t mesh_id =
-      G_Renderer::get()->create_mesh(vertexes, v_size, indexes, i_size);
-  G_Renderer::get()->set_mesh_store(&mesh_id, 1);
-  e.run();
+  desc.app = {"Testing Vulkan", 1, 0, 0};
+
+  if (runtime_init(desc)) {
+
+    file_info vert = load_file("shaders/demo_vert.spv");
+    file_info frag = load_file("shaders/demo_frag.spv");
+
+    auto vert_mod = vk_shader_create(vert.data, vert.size);
+    auto frag_mod = vk_shader_create(frag.data, frag.size);
+
+    release_file(vert);
+    release_file(frag);
+
+    pipline_description pipe_desc{};
+    pipe_desc.shaders[0].module = vert_mod;
+    pipe_desc.shaders[0].type = VK_SHADER_STAGE_VERTEX_BIT;
+    pipe_desc.shaders[1].module = frag_mod;
+    pipe_desc.shaders[1].type = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    pipe_desc.size = 2;
+
+    VkPipelineExt pipeline;
+    vk_pipeline_create(pipe_desc, &pipeline);
+
+    for (int i = 0; i < 1000; ++i) {
+    }
+
+    vk_pipline_destroy(pipeline);
+    vk_shader_destroy(vert_mod);
+    vk_shader_destroy(frag_mod);
+
+  } else {
+    printf("Somthing when wrong\n");
+  }
+  runtime_deinit();
 }

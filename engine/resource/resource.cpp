@@ -1,7 +1,5 @@
 #include "resource.h"
 
-Resource::Resource() {}
+bool resource_init() { return true; }
 
-bool Resource::init() { return true; }
-
-void Resource::deinit() {}
+void resource_deinit() {}

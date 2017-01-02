@@ -1,7 +1,5 @@
 #include "audio.h"
 
-Audio::Audio() {}
+bool audio_init() { return true; }
 
-bool Audio::init() { return true; }
-
-void Audio::deinit() {}
+void audio_deinit() {}

@@ -6,15 +6,9 @@
 #include <memory>
 #include <type_traits>
 
-template <typename _Tp, typename _Ma> class type_allocator : _Ma {
+template <typename _Tp, typename _Ma> class type_allocator : public _Ma {
 public:
-  template <typename... _Args> _Tp *make_new(_Args... args) {
-    if (std::is_trivially_constructible<_Tp>::value) {
-      return static_cast<_Tp *>(_Ma::alloc(sizeof(_Tp)));
-    } else {
-      return new (_Ma::alloc(sizeof(_Tp))) _Tp(std::forward<_Args>(args)...);
-    }
-  }
+  _Tp *make_new() { return static_cast<_Tp *>(_Ma::alloc(sizeof(_Tp))); }
   void destroy(_Tp *ptr) {
     if (!std::is_trivially_destructible<_Tp>::value) {
       ptr->~_Tp();
@@ -23,13 +17,8 @@ public:
   }
 };
 
-template <typename _Tp, typename _Ma, typename... _Args>
-_Tp *make_new(_Args... args) {
-  if (std::is_trivially_constructible<_Tp>::value) {
-    return static_cast<_Tp *>(_Ma::alloc(sizeof(_Tp)));
-  } else {
-    return new (_Ma::alloc(sizeof(_Tp))) _Tp(std::forward<_Args>(args)...);
-  }
+template <typename _Tp, typename _Ma> _Tp *make_new() {
+  return static_cast<_Tp *>(_Ma::alloc(sizeof(_Tp)));
 }
 
 template <typename _Tp, typename _Ma> void destroy(_Tp *ptr) {
