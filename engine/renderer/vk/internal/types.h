@@ -14,4 +14,9 @@ struct VkFramebuffersExt_T {
   size_t size;
 };
 
+struct VkCommandBuffersExt_T {
+  VkCommandBuffer *command_buffers;
+  size_t size;
+};
+
 #endif // TYPES_H

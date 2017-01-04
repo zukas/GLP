@@ -1,6 +1,9 @@
 #include "engine_include.h"
 #include "memory/global_malloc.h"
+#include "renderer/vk/commands.h"
+#include "renderer/vk/frame_buffers.h"
 #include "renderer/vk/graphics_pipeline.h"
+#include "renderer/vk/logical_device.h"
 
 #include <cstdio>
 
@@ -54,9 +57,21 @@ int main() {
     VkPipelineExt pipeline;
     vk_pipeline_create(pipe_desc, &pipeline);
 
+    VkFramebuffersExt frame_buffers;
+    vk_frame_buffers_create(pipe_desc, pipeline, &frame_buffers);
+
+    VkCommandBuffersExt cmd_buffers;
+    vk_cmd_buffers_create(frame_buffers, &cmd_buffers);
+
+    vk_cmd_buffers_record(pipeline, frame_buffers, cmd_buffers);
+
     for (int i = 0; i < 1000; ++i) {
+      renderer_execute(cmd_buffers);
     }
 
+    vkDeviceWaitIdle(vk_lg_device_get());
+    vk_cmd_buffers_destroy(cmd_buffers);
+    vk_frame_buffers_destroy(frame_buffers);
     vk_pipline_destroy(pipeline);
     vk_shader_destroy(vert_mod);
     vk_shader_destroy(frag_mod);

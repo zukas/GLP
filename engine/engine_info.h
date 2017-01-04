@@ -19,6 +19,7 @@
 
 GLPHANDLE(VkPipelineExt);
 GLPHANDLE(VkFramebuffersExt);
+GLPHANDLE(VkCommandBuffersExt);
 
 struct app_description {
   const char *app_name;

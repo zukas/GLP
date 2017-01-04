@@ -70,4 +70,4 @@ VkFormat vk_swap_chain_image_format_get() {
   return __context.swap_chain_format;
 }
 
-VkExtent2D vk_swap_chain_extent_get() {}
+VkExtent2D vk_swap_chain_extent_get() { return __context.swap_chain_extent; }

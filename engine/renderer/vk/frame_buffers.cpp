@@ -23,7 +23,7 @@ bool vk_frame_buffers_init(size_t count) {
 void vk_frame_buffers_deinit() { __context.frame_buffer_allocator.deinit(); }
 
 bool vk_frame_buffers_create(const pipline_description &pipeline_desc,
-                             const VkPipelineExt *pipeline,
+                             const VkPipelineExt pipeline,
                              VkFramebuffersExt *frame_buffers) {
 
   size_t image_v_size = vk_image_views_size();
@@ -39,7 +39,7 @@ bool vk_frame_buffers_create(const pipline_description &pipeline_desc,
   for (i = 0; i < image_v_size; i++) {
     VkFramebufferCreateInfo buffer_info = {};
     buffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    buffer_info.renderPass = (*pipeline)->render_pass;
+    buffer_info.renderPass = pipeline->render_pass;
     buffer_info.attachmentCount = 1;
     buffer_info.pAttachments = &image_v[i];
     buffer_info.width = extent.width;
@@ -54,7 +54,7 @@ bool vk_frame_buffers_create(const pipline_description &pipeline_desc,
     VkFramebuffersExt_T *obj = __context.frame_buffer_allocator.make_new();
     obj->frame_buffers = buffers;
     obj->size = image_v_size;
-    frame_buffers = &obj;
+    *frame_buffers = obj;
   } else {
     for (uint32_t j = 0; j < i; j++) {
       vkDestroyFramebuffer(device, buffers[i], nullptr);
@@ -65,10 +65,10 @@ bool vk_frame_buffers_create(const pipline_description &pipeline_desc,
   return i == image_v_size;
 }
 
-void vk_frame_buffers_destroy(const VkFramebuffersExt *frame_buffers) {
+void vk_frame_buffers_destroy(const VkFramebuffersExt frame_buffers) {
   if (frame_buffers) {
-    VkFramebuffer *buffers = (*frame_buffers)->frame_buffers;
-    size_t buffers_size = (*frame_buffers)->size;
+    VkFramebuffer *buffers = frame_buffers->frame_buffers;
+    size_t buffers_size = frame_buffers->size;
     if (buffers) {
       VkDevice device = vk_lg_device_get();
       for (uint32_t i = 0; i < buffers_size; i++) {
@@ -76,6 +76,6 @@ void vk_frame_buffers_destroy(const VkFramebuffersExt *frame_buffers) {
       }
       glp_free(buffers);
     }
-    __context.frame_buffer_allocator.destroy(*frame_buffers);
+    __context.frame_buffer_allocator.destroy(frame_buffers);
   }
 }
