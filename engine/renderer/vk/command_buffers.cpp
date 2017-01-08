@@ -1,4 +1,4 @@
-#include "commands.h"
+#include "command_buffers.h"
 
 #include "internal/types.h"
 #include "logical_device.h"
@@ -92,7 +92,7 @@ void vk_cmd_buffers_destroy(const VkCommandBuffersExt cmd_buffers) {
 void vk_cmd_buffers_record(const VkPipelineExt pipeline,
                            const VkFramebuffersExt frame_buffers,
                            const VkCommandBuffersExt cmd_buffers,
-                           const VkVertexBufferExt vertex_buffers) {
+                           geometry_description geometry) {
 
   VkExtent2D extent = vk_swap_chain_extent_get();
 
@@ -137,12 +137,21 @@ void vk_cmd_buffers_record(const VkPipelineExt pipeline,
     vkCmdSetViewport(cmd_buffers->command_buffers[i], 0, 1, &viewport);
     vkCmdSetScissor(cmd_buffers->command_buffers[i], 0, 1, &scissor);
 
-    VkBuffer vertex_data[] = {vertex_buffers->buffer};
-    VkDeviceSize offsets[] = {0};
-    vkCmdBindVertexBuffers(cmd_buffers->command_buffers[i], 0, 1, vertex_data,
-                           offsets);
+    vkCmdBindVertexBuffers(cmd_buffers->command_buffers[i], 0, 1,
+                           &geometry.vertex_data->buffer,
+                           &geometry.vertex_data->block.offset);
 
-    vkCmdDraw(cmd_buffers->command_buffers[i], 3, 1, 0, 0);
+    if (geometry.index_count > 0) {
+      vkCmdBindIndexBuffer(
+          cmd_buffers->command_buffers[i], geometry.index_data->buffer,
+          geometry.index_data->block.offset, VK_INDEX_TYPE_UINT16);
+      vkCmdDrawIndexed(cmd_buffers->command_buffers[i], geometry.index_count, 1,
+                       0, 0, 0);
+    } else {
+
+      vkCmdDraw(cmd_buffers->command_buffers[i], geometry.vertex_count, 1, 0,
+                0);
+    }
 
     vkCmdEndRenderPass(cmd_buffers->command_buffers[i]);
 

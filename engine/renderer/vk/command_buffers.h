@@ -17,6 +17,6 @@ void vk_cmd_buffers_destroy(const VkCommandBuffersExt cmd_buffers);
 void vk_cmd_buffers_record(const VkPipelineExt pipeline,
                            const VkFramebuffersExt frame_buffers,
                            const VkCommandBuffersExt cmd_buffers,
-                           const VkVertexBufferExt vertex_buffers);
+                           geometry_description geometry);
 
 #endif // COMMANDS_H

@@ -12,7 +12,7 @@ bool pool_allocator::init(size_t blk_size, size_t blk_count) {
   pool_node_t *node = static_cast<pool_node_t *>(buffer);
   pool_node_t *root = node;
   for (size_t i = 1; i < blk_count - 1; i++) {
-    pool_node_t *next = node + 1;
+    pool_node_t *next = address_add(node, blk);
     next->next = nullptr;
     node->next = next;
     node = next;
@@ -36,11 +36,14 @@ void pool_allocator::deinit() {
 void *pool_allocator::alloc(size_t) {
   pool_node_t *tmp = m_root;
   m_root = m_root->next;
+  tmp->next = nullptr;
   return tmp;
 }
 
 void pool_allocator::free(void *p, size_t) {
-  pool_node_t *ptr = static_cast<pool_node_t *>(p);
-  ptr->next = m_root;
-  m_root = ptr;
+  if (p != nullptr) {
+    pool_node_t *ptr = static_cast<pool_node_t *>(p);
+    ptr->next = m_root;
+    m_root = ptr;
+  }
 }

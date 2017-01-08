@@ -20,7 +20,7 @@
 GLPHANDLE(VkPipelineExt);
 GLPHANDLE(VkFramebuffersExt);
 GLPHANDLE(VkCommandBuffersExt);
-GLPHANDLE(VkVertexBufferExt);
+GLPHANDLE(VkDataBufferExt);
 
 struct app_description {
   const char *app_name;
@@ -30,6 +30,13 @@ struct app_description {
 };
 
 struct device_description {};
+
+struct geometry_description {
+  VkDataBufferExt vertex_data;
+  uint32_t vertex_count;
+  VkDataBufferExt index_data;
+  uint32_t index_count;
+};
 
 struct window_size {
   uint32_t width;

@@ -1,10 +1,10 @@
 #include "engine_include.h"
 #include "memory/global_malloc.h"
-#include "renderer/vk/commands.h"
+#include "renderer/vk/command_buffers.h"
+#include "renderer/vk/data_buffers.h"
 #include "renderer/vk/frame_buffers.h"
 #include "renderer/vk/graphics_pipeline.h"
 #include "renderer/vk/logical_device.h"
-#include "renderer/vk/vertex.h"
 
 #include <cstdio>
 
@@ -31,9 +31,12 @@ void release_file(file_info info) {
   }
 }
 
-static vertex_2d_color vertexes[] = {{{0.0f, -0.8f}, {0.8f, 0.5f, 0.2f}},
-                                     {{0.6f, 0.8f}, {0.2f, 0.8f, 0.5f}},
-                                     {{-0.6f, 0.8f}, {0.5f, 0.2f, 0.8f}}};
+static vertex_2d_color vertexes[] = {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+                                     {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+                                     {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+                                     {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}};
+
+static uint16_t indexes[] = {0, 1, 2, 2, 3, 0};
 
 int main() {
   engine_description desc;
@@ -67,16 +70,23 @@ int main() {
 
     VkCommandBuffersExt cmd_buffers = vk_cmd_buffers_create(frame_buffers);
 
-    VkVertexBufferExt vertex_buffer = vk_vertex_buffer_create(vertexes, 3);
+    geometry_description geom;
+    geom.index_data = vk_data_buffer_create(indexes, sizeof(uint16_t) * 6);
+    geom.index_count = 6;
 
-    vk_cmd_buffers_record(pipeline, frame_buffers, cmd_buffers, vertex_buffer);
+    geom.vertex_data =
+        vk_data_buffer_create(vertexes, sizeof(vertex_2d_color) * 4);
+    geom.vertex_count = 4;
+
+    vk_cmd_buffers_record(pipeline, frame_buffers, cmd_buffers, geom);
 
     for (int i = 0; i < 200; ++i) {
       renderer_execute(cmd_buffers);
     }
 
     vkDeviceWaitIdle(vk_lg_device_get());
-    vk_vertex_buffer_destroy(vertex_buffer);
+    vk_data_buffer_destroy(geom.index_data);
+    vk_data_buffer_destroy(geom.vertex_data);
     vk_cmd_buffers_destroy(cmd_buffers);
     vk_frame_buffers_destroy(frame_buffers);
     vk_pipline_destroy(pipeline);

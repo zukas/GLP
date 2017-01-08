@@ -20,7 +20,7 @@ struct VkCommandBuffersExt_T {
   size_t size;
 };
 
-struct VkVertexBufferExt_T {
+struct VkDataBufferExt_T {
   VkBuffer buffer;
   VkMemoryBlockExt block;
 };
