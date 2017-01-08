@@ -4,6 +4,7 @@
 #include "renderer/vk/frame_buffers.h"
 #include "renderer/vk/graphics_pipeline.h"
 #include "renderer/vk/logical_device.h"
+#include "renderer/vk/vertex.h"
 
 #include <cstdio>
 
@@ -30,6 +31,10 @@ void release_file(file_info info) {
   }
 }
 
+static vertex_2d_color vertexes[] = {{{0.0f, -0.8f}, {0.8f, 0.5f, 0.2f}},
+                                     {{0.6f, 0.8f}, {0.2f, 0.8f, 0.5f}},
+                                     {{-0.6f, 0.8f}, {0.5f, 0.2f, 0.8f}}};
+
 int main() {
   engine_description desc;
 
@@ -53,23 +58,25 @@ int main() {
     pipe_desc.shaders[1].type = VK_SHADER_STAGE_FRAGMENT_BIT;
 
     pipe_desc.size = 2;
+    pipe_desc.vertex_desc = pipline_description::VERTEX_2D_COLOR;
 
-    VkPipelineExt pipeline;
-    vk_pipeline_create(pipe_desc, &pipeline);
+    VkPipelineExt pipeline = vk_pipeline_create(pipe_desc);
 
-    VkFramebuffersExt frame_buffers;
-    vk_frame_buffers_create(pipe_desc, pipeline, &frame_buffers);
+    VkFramebuffersExt frame_buffers =
+        vk_frame_buffers_create(pipe_desc, pipeline);
 
-    VkCommandBuffersExt cmd_buffers;
-    vk_cmd_buffers_create(frame_buffers, &cmd_buffers);
+    VkCommandBuffersExt cmd_buffers = vk_cmd_buffers_create(frame_buffers);
 
-    vk_cmd_buffers_record(pipeline, frame_buffers, cmd_buffers);
+    VkVertexBufferExt vertex_buffer = vk_vertex_buffer_create(vertexes, 3);
 
-    for (int i = 0; i < 1000; ++i) {
+    vk_cmd_buffers_record(pipeline, frame_buffers, cmd_buffers, vertex_buffer);
+
+    for (int i = 0; i < 200; ++i) {
       renderer_execute(cmd_buffers);
     }
 
     vkDeviceWaitIdle(vk_lg_device_get());
+    vk_vertex_buffer_destroy(vertex_buffer);
     vk_cmd_buffers_destroy(cmd_buffers);
     vk_frame_buffers_destroy(frame_buffers);
     vk_pipline_destroy(pipeline);

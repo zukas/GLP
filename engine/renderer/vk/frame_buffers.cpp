@@ -22,9 +22,9 @@ bool vk_frame_buffers_init(size_t count) {
 
 void vk_frame_buffers_deinit() { __context.frame_buffer_allocator.deinit(); }
 
-bool vk_frame_buffers_create(const pipline_description &pipeline_desc,
-                             const VkPipelineExt pipeline,
-                             VkFramebuffersExt *frame_buffers) {
+VkFramebuffersExt
+vk_frame_buffers_create(const pipline_description &pipeline_desc,
+                        const VkPipelineExt pipeline) {
 
   size_t image_v_size = vk_image_views_size();
   VkImageView *image_v = vk_image_views_get();
@@ -49,20 +49,18 @@ bool vk_frame_buffers_create(const pipline_description &pipeline_desc,
         VK_SUCCESS)
       break;
   }
-
+  VkFramebuffersExt_T *obj = nullptr;
   if (i == image_v_size) {
-    VkFramebuffersExt_T *obj = __context.frame_buffer_allocator.make_new();
+    obj = __context.frame_buffer_allocator.make_new();
     obj->frame_buffers = buffers;
     obj->size = image_v_size;
-    *frame_buffers = obj;
   } else {
     for (uint32_t j = 0; j < i; j++) {
       vkDestroyFramebuffer(device, buffers[i], nullptr);
     }
     glp_free(buffers);
-    frame_buffers = nullptr;
   }
-  return i == image_v_size;
+  return obj;
 }
 
 void vk_frame_buffers_destroy(const VkFramebuffersExt frame_buffers) {

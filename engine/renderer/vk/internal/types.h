@@ -2,6 +2,7 @@
 #define TYPES_H
 
 #include "engine_info.h"
+#include "renderer/vk/common_types.h"
 
 struct VkPipelineExt_T {
   VkPipeline pipeline;
@@ -17,6 +18,11 @@ struct VkFramebuffersExt_T {
 struct VkCommandBuffersExt_T {
   VkCommandBuffer *command_buffers;
   size_t size;
+};
+
+struct VkVertexBufferExt_T {
+  VkBuffer buffer;
+  VkMemoryBlockExt block;
 };
 
 #endif // TYPES_H

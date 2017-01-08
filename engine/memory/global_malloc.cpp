@@ -10,6 +10,21 @@ struct malloc_header {
   uint32_t used_size;
 };
 
+#undef glp_malloc
+#ifdef ALLOCATOR_DEBUG
+
+void *debug_glp_malloc(size_t size, const char *filename, const char *function,
+                       uint32_t line) {
+  size_t aligned_size = global_stack_align_size(size + sizeof(malloc_header));
+  void *ptr = debug_global_stack_alloc(aligned_size, filename, function, line);
+  malloc_header *header = static_cast<malloc_header *>(ptr);
+  header->block_size = aligned_size - sizeof(malloc_header);
+  header->used_size = size;
+  return address_add(ptr, sizeof(malloc_header));
+}
+
+#endif
+
 void *glp_malloc(size_t size) {
   size_t aligned_size = global_stack_align_size(size + sizeof(malloc_header));
   void *ptr = global_stack_alloc(aligned_size);

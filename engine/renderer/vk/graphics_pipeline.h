@@ -9,8 +9,7 @@ void vk_shader_destroy(VkShaderModule module);
 bool vk_pipeline_init(size_t count);
 void vk_pipeline_deinit();
 
-bool vk_pipeline_create(const pipline_description &desc,
-                        VkPipelineExt *pipeline);
+VkPipelineExt vk_pipeline_create(const pipline_description &desc);
 
 void vk_pipline_destroy(const VkPipelineExt pipeline);
 

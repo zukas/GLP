@@ -8,6 +8,8 @@
 #include "phisical_device.h"
 #include "swap_chain.h"
 
+#include <cassert>
+
 using allocator = type_allocator<VkCommandBuffersExt_T, pool_allocator>;
 
 struct {
@@ -37,8 +39,24 @@ void vk_cmd_pool_deinit() {
   __context.command_allocator.deinit();
 }
 
-bool vk_cmd_buffers_create(const VkFramebuffersExt frame_buffers,
-                           VkCommandBuffersExt *cmd_buffers) {
+VkCommandBuffer vk_cmd_create() {
+  VkCommandBufferAllocateInfo alloc_info = {};
+  alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  alloc_info.commandPool = __context.command_pool;
+  alloc_info.commandBufferCount = 1;
+
+  VkCommandBuffer buffer;
+  vkAllocateCommandBuffers(vk_lg_device_get(), &alloc_info, &buffer);
+  return buffer;
+}
+
+void vk_cmd_destroy(VkCommandBuffer buffer) {
+  vkFreeCommandBuffers(vk_lg_device_get(), __context.command_pool, 1, &buffer);
+}
+
+VkCommandBuffersExt
+vk_cmd_buffers_create(const VkFramebuffersExt frame_buffers) {
 
   VkCommandBufferAllocateInfo alloc_info{};
   alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -53,25 +71,28 @@ bool vk_cmd_buffers_create(const VkFramebuffersExt frame_buffers,
       vkAllocateCommandBuffers(vk_lg_device_get(), &alloc_info, buffers);
   if (res != VK_SUCCESS) {
     glp_free(buffers);
-    return false;
+    return nullptr;
   }
 
   VkCommandBuffersExt_T *obj = __context.command_allocator.make_new();
   obj->command_buffers = buffers;
   obj->size = frame_buffers->size;
-  *cmd_buffers = obj;
-  return true;
+  return obj;
 }
 
 void vk_cmd_buffers_destroy(const VkCommandBuffersExt cmd_buffers) {
-
+  assert(cmd_buffers);
   vkFreeCommandBuffers(vk_lg_device_get(), __context.command_pool,
                        cmd_buffers->size, cmd_buffers->command_buffers);
+
+  glp_free(cmd_buffers->command_buffers);
+  __context.command_allocator.destroy(cmd_buffers);
 }
 
 void vk_cmd_buffers_record(const VkPipelineExt pipeline,
                            const VkFramebuffersExt frame_buffers,
-                           const VkCommandBuffersExt cmd_buffers) {
+                           const VkCommandBuffersExt cmd_buffers,
+                           const VkVertexBufferExt vertex_buffers) {
 
   VkExtent2D extent = vk_swap_chain_extent_get();
 
@@ -115,6 +136,11 @@ void vk_cmd_buffers_record(const VkPipelineExt pipeline,
 
     vkCmdSetViewport(cmd_buffers->command_buffers[i], 0, 1, &viewport);
     vkCmdSetScissor(cmd_buffers->command_buffers[i], 0, 1, &scissor);
+
+    VkBuffer vertex_data[] = {vertex_buffers->buffer};
+    VkDeviceSize offsets[] = {0};
+    vkCmdBindVertexBuffers(cmd_buffers->command_buffers[i], 0, 1, vertex_data,
+                           offsets);
 
     vkCmdDraw(cmd_buffers->command_buffers[i], 3, 1, 0, 0);
 

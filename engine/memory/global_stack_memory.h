@@ -10,7 +10,16 @@ bool global_stack_init(size_t size);
 void global_stack_deinit();
 
 size_t global_stack_align_size(size_t size);
+
+#ifdef ALLOCATOR_DEBUG
+void *debug_global_stack_alloc(size_t size, const char *filename,
+                               const char *function, uint32_t line);
+#define global_stack_alloc(size)                                               \
+  debug_global_stack_alloc(size, __FILE__, __FUNCTION__, __LINE__)
+#else
 void *global_stack_alloc(size_t size);
+#endif
+
 void global_stack_free(void *ptr, size_t size);
 bool global_stack_owns(void *ptr);
 

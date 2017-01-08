@@ -20,6 +20,7 @@
 GLPHANDLE(VkPipelineExt);
 GLPHANDLE(VkFramebuffersExt);
 GLPHANDLE(VkCommandBuffersExt);
+GLPHANDLE(VkVertexBufferExt);
 
 struct app_description {
   const char *app_name;
@@ -55,6 +56,7 @@ struct shader_description {
 struct pipline_description {
   shader_description shaders[4];
   uint32_t size;
+  enum { VERTEX_2D_COLOR, VERTEX_2D_UV } vertex_desc;
 };
 
 struct engine_description {

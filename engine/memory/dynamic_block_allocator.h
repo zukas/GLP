@@ -91,7 +91,7 @@ public:
       void *end_blk = address_add(ptr, size);
 
       if (end_node == ptr && end_blk == next) {
-        block_size += size + node->next->size;
+        block_size += size + next->size;
         next = next->next;
       } else if (end_node == ptr && end_blk < next) {
         block_size += size;

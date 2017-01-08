@@ -14,6 +14,7 @@ option(GLP_SANITIZE_LEAK "Enable -fsanitize=leak" OFF)
 option(GLP_SANITIZE_UNDEFINED "Enable -fsanitize=undefined" OFF)
 option(GLP_PERF "Enable perf mode" OFF)
 option(GLP_MEM_STAT "Enable engine memory statistics" OFF)
+option(GLP_MEM_DEBUG "Enable engine memory debugging" OFF)
 
 if(GLP_SANITIZE_ADDRESS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
@@ -41,6 +42,10 @@ endif()
 
 if(GLP_MEM_STAT)
     add_definitions(-DALLOCATOR_STATS)
+endif()
+
+if(GLP_MEM_DEBUG)
+    add_definitions(-DALLOCATOR_DEBUG)
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

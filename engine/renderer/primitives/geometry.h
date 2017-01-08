@@ -32,10 +32,10 @@ struct ray3 {
   glm::vec3 dir;
 };
 
-void generate_bound_plane3(const bound_plane3 &plane, vertex *vertexes,
+void generate_bound_plane3(const bound_plane3 &plane, vertex_3d_uv *vertexes,
                            u_int32_t *indexes, uint32_t subparts);
 
-void generate_sphere3(const sphere3 &sphare, vertex *vertexes,
+void generate_sphere3(const sphere3 &sphare, vertex_3d_uv *vertexes,
                       u_int32_t *indexes, uint32_t subparts);
 
 constexpr uint32_t vertex_size_sphere3(uint32_t subparts) {
@@ -46,7 +46,7 @@ constexpr uint32_t index_size_sphere3(uint32_t subparts) {
   return (subparts * subparts + subparts) * 6;
 }
 
-void generate_cube3(const cube3 &cube, vertex *vertexes, uint32_t *indexes,
-                    uint32_t subparts);
+void generate_cube3(const cube3 &cube, vertex_3d_uv *vertexes,
+                    uint32_t *indexes, uint32_t subparts);
 
 #endif // TYPES_H

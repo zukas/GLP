@@ -17,6 +17,19 @@ struct block_node_t {
   size_t size;
 };
 
+#ifdef ALLOCATOR_DEBUG
+
+struct locator_info {
+  const char *filename;
+  const char *function;
+  uint32_t line;
+  size_t size;
+  void *ptr;
+  locator_info *next;
+};
+
+#endif
+
 template <size_t blk_size> constexpr size_t align_block(size_t size) {
   return (size + (blk_size - 1)) & ~(blk_size - 1);
 }

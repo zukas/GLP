@@ -1,5 +1,6 @@
 #include "renderer.h"
 
+#include "memory/mutils.h"
 #include "vk/commands.h"
 #include "vk/frame_buffers.h"
 #include "vk/graphics_pipeline.h"
@@ -7,9 +8,11 @@
 #include "vk/instance.h"
 #include "vk/internal/types.h"
 #include "vk/logical_device.h"
+#include "vk/memory_device.h"
 #include "vk/phisical_device.h"
 #include "vk/queue.h"
 #include "vk/swap_chain.h"
+#include "vk/vertex.h"
 #include "vk/window.h"
 
 #include <cstring>
@@ -54,9 +57,11 @@ bool renderer_init(const engine_description &desc) {
   status = status && vk_queue_init();
   status = status && vk_swap_chain_init();
   status = status && vk_image_views_init();
+  status = status && vk_memory_init(MB(128), MB(128), 0);
   status = status && vk_frame_buffers_init(1024);
   status = status && vk_pipeline_init(1024);
   status = status && vk_cmd_pool_init(1024);
+  status = status && vk_vertex_buffer_init(1024);
 
   demo_init();
 
@@ -69,9 +74,11 @@ void renderer_deinit() {
 
   demo_deinit();
 
+  vk_vertex_buffer_deinit();
   vk_cmd_pool_deinit();
   vk_pipeline_deinit();
   vk_frame_buffers_deinit();
+  vk_memory_deinit();
   vk_image_views_deinit();
   vk_swap_chain_deinit();
   vk_queue_deinit();

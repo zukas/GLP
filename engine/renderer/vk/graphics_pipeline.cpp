@@ -4,7 +4,9 @@
 #include "logical_device.h"
 #include "memory/pool_allocator.h"
 #include "memory/type_allocator.h"
+#include "renderer/renderer_data.h"
 #include "swap_chain.h"
+#include "utils/fixed_array.h"
 
 using allocator = type_allocator<VkPipelineExt_T, pool_allocator>;
 
@@ -37,8 +39,7 @@ void vk_render_pass_destroy(VkRenderPass render_pass) {
   vkDestroyRenderPass(vk_lg_device_get(), render_pass, nullptr);
 }
 
-bool vk_pipeline_create(const pipline_description &desc,
-                        VkPipelineExt *pipeline) {
+VkPipelineExt vk_pipeline_create(const pipline_description &desc) {
 
   VkResult res;
   VkDevice device = vk_lg_device_get();
@@ -53,8 +54,7 @@ bool vk_pipeline_create(const pipline_description &desc,
   VkPipelineLayout layout;
   res = vkCreatePipelineLayout(device, &layout_info, nullptr, &layout);
   if (res != VK_SUCCESS) {
-    vkDestroyPipelineLayout(device, layout, nullptr);
-    return false;
+    return nullptr;
   }
 
   // Describing render pass stage
@@ -100,9 +100,8 @@ bool vk_pipeline_create(const pipline_description &desc,
   VkRenderPass render_pass;
   res = vkCreateRenderPass(device, &render_pass_info, nullptr, &render_pass);
   if (res != VK_SUCCESS) {
-    vkDestroyRenderPass(device, render_pass, nullptr);
     vkDestroyPipelineLayout(device, layout, nullptr);
-    return false;
+    return nullptr;
   }
 
   // Describing pipline
@@ -114,12 +113,51 @@ bool vk_pipeline_create(const pipline_description &desc,
     stage_info[i].pName = "main";
   }
 
+  fixed_array<VkVertexInputBindingDescription> input_bind_desc;
+  fixed_array<VkVertexInputAttributeDescription> input_attr_desc;
+
   VkPipelineVertexInputStateCreateInfo vertex_info = {};
   vertex_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertex_info.vertexBindingDescriptionCount = 0;
-  vertex_info.pVertexBindingDescriptions = nullptr; // Optional
-  vertex_info.vertexAttributeDescriptionCount = 0;
-  vertex_info.pVertexAttributeDescriptions = nullptr; // Optional
+  switch (desc.vertex_desc) {
+  case pipline_description::VERTEX_2D_COLOR:
+    input_bind_desc = fixed_array<VkVertexInputBindingDescription>(1);
+    input_bind_desc[0].binding = 0;
+    input_bind_desc[0].stride = sizeof(vertex_2d_color);
+    input_bind_desc[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    input_attr_desc = fixed_array<VkVertexInputAttributeDescription>(2);
+    input_attr_desc[0].binding = 0;
+    input_attr_desc[0].location = 0;
+    input_attr_desc[0].format = VK_FORMAT_R32G32_SFLOAT;
+    input_attr_desc[0].offset = offsetof(vertex_2d_color, pos);
+
+    input_attr_desc[1].binding = 0;
+    input_attr_desc[1].location = 1;
+    input_attr_desc[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    input_attr_desc[1].offset = offsetof(vertex_2d_color, color);
+    break;
+  case pipline_description::VERTEX_2D_UV:
+    input_bind_desc = fixed_array<VkVertexInputBindingDescription>(1);
+    input_bind_desc[0].binding = 0;
+    input_bind_desc[0].stride = sizeof(vertex_2d_uv);
+    input_bind_desc[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    input_attr_desc = fixed_array<VkVertexInputAttributeDescription>(2);
+    input_attr_desc[0].binding = 0;
+    input_attr_desc[0].location = 0;
+    input_attr_desc[0].format = VK_FORMAT_R32G32_SFLOAT;
+    input_attr_desc[0].offset = offsetof(vertex_2d_uv, pos);
+
+    input_attr_desc[1].binding = 0;
+    input_attr_desc[1].location = 1;
+    input_attr_desc[1].format = VK_FORMAT_R32G32_SFLOAT;
+    input_attr_desc[1].offset = offsetof(vertex_2d_uv, uv);
+    break;
+  }
+  vertex_info.vertexBindingDescriptionCount = input_bind_desc.size();
+  vertex_info.pVertexBindingDescriptions = input_bind_desc.data();
+  vertex_info.vertexAttributeDescriptionCount = input_attr_desc.size();
+  vertex_info.pVertexAttributeDescriptions = input_attr_desc.data();
 
   VkPipelineInputAssemblyStateCreateInfo input_asm = {};
   input_asm.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -227,19 +265,17 @@ bool vk_pipeline_create(const pipline_description &desc,
   res = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipeline_info,
                                   nullptr, &pipeline_obj);
 
+  VkPipelineExt_T *obj = nullptr;
   if (res != VK_SUCCESS) {
-    vkDestroyPipeline(device, pipeline_obj, nullptr);
     vkDestroyRenderPass(device, render_pass, nullptr);
     vkDestroyPipelineLayout(device, layout, nullptr);
   } else {
-    VkPipelineExt_T *obj = __context.pipeline_allocator.make_new();
+    obj = __context.pipeline_allocator.make_new();
     obj->pipeline = pipeline_obj;
     obj->layout = layout;
     obj->render_pass = render_pass;
-    *pipeline = obj;
   }
-
-  return res == VK_SUCCESS;
+  return obj;
 }
 
 void vk_pipline_destroy(const VkPipelineExt pipeline) {

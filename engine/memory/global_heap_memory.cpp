@@ -1,5 +1,6 @@
 #include "global_heap_memory.h"
 
+#include "utils/math.h"
 #include <cassert>
 #include <mutex>
 
@@ -13,7 +14,8 @@ struct {
 #ifdef ALLOCATOR_STATS
 #include <cstdio>
 struct {
-  uint64_t count;
+  uint64_t alloc_count;
+  uint64_t free_count;
   size_t used_bytes;
   size_t free_bytes;
   size_t max_used;
@@ -35,7 +37,8 @@ bool global_heap_init(size_t size) {
   __global_heap.root->size = size;
 
 #ifdef ALLOCATOR_STATS
-  allocator_stats.count = 0;
+  allocator_stats.alloc_count = 0;
+  allocator_stats.free_count = 0;
   allocator_stats.used_bytes = 0;
   allocator_stats.free_bytes = size;
   allocator_stats.max_used = 0;
@@ -53,10 +56,12 @@ void global_heap_deinit() {
   __global_heap.root = nullptr;
 
 #ifdef ALLOCATOR_STATS
-  printf("global_heap: allocations: %lu, used_bytes: %lu, free_bytes: %lu, "
+  printf("global_heap: allocations: %lu, deallocations: %lu, used_bytes: %lu, "
+         "free_bytes: %lu, "
          "max_used: %lu\n",
-         allocator_stats.count, allocator_stats.used_bytes,
-         allocator_stats.free_bytes, allocator_stats.max_used);
+         allocator_stats.alloc_count, allocator_stats.free_count,
+         allocator_stats.used_bytes, allocator_stats.free_bytes,
+         allocator_stats.max_used);
 #endif
 }
 
@@ -100,7 +105,7 @@ void *global_heap_alloc(size_t size) {
     assert(__global_heap.root != nullptr);
     res = static_cast<void *>(node);
 #ifdef ALLOCATOR_STATS
-    allocator_stats.count++;
+    allocator_stats.alloc_count++;
     allocator_stats.used_bytes += size;
     allocator_stats.free_bytes -= size;
     allocator_stats.max_used =
@@ -168,6 +173,7 @@ void global_heap_free(void *ptr, size_t size) {
   }
 
 #ifdef ALLOCATOR_STATS
+  allocator_stats.free_count++;
   allocator_stats.used_bytes -= size;
   allocator_stats.free_bytes += size;
 #endif
